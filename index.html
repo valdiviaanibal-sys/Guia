@@ -1842,7 +1842,7 @@ tbody td input[readonly] { color: #475569; cursor: default; }
 </div>
 
 <!-- ===== PANTALLA PRINCIPAL ===== -->
-<div class="app-screen active" id="pantallaPrincipal">
+<div class="app-screen" id="pantallaPrincipal">
 
   <!-- HEADER SOLO IMPRESIÓN — GUÍA DE DESPACHO -->
 
@@ -2092,7 +2092,7 @@ tbody td input[readonly] { color: #475569; cursor: default; }
 </div>
 
 <!-- ===== BOTTOM NAV ===== -->
-<div class="bottom-nav" id="bottomNav">
+<div class="bottom-nav" id="bottomNav" style="display:none;">
   <button class="bottom-nav-item active" id="bnGuia" onclick="cambiarTab('guia')">
     <span class="bn-ico">📄</span>Guía
   </button>
@@ -2108,7 +2108,7 @@ tbody td input[readonly] { color: #475569; cursor: default; }
 </div>
 
 <!-- ===== FAB ===== -->
-<div id="fabMenu">
+<div id="fabMenu" style="display:none;">
   <button id="fabMain" onclick="toggleFab()" aria-label="Acciones rápidas">＋</button>
   <div id="fabActions">
     <div class="fab-item">
@@ -3438,26 +3438,24 @@ async function guardarEnNube(tipo, datos) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Iniciar autenticación Supabase — esperar que SDK esté listo
-  setTimeout(() => {
-    if (typeof iniciarApp === 'function') iniciarApp();
-  }, 200);
-  try {
-    document.getElementById('numGuia').value = numGuiaActual;
-    document.getElementById('lblNumGuia').textContent = 'Guía N° ' + numGuiaActual;
-    document.getElementById('printNumGuia').textContent = numGuiaActual;
-    document.getElementById('fechaGuia').value = hoyISO();
-  } catch (e) { console.error(e); }
-  try { setupAutoCliente(); } catch (e) { console.error('clientes', e); }
-  try { setupAutoProducto(); } catch (e) { console.error('productos', e); }
-  try { setupRutaGestor(); } catch (e) { console.error(e); }
-  try { actualizarTotales(); } catch (e) { console.error(e); }
-  try { initTraspaso(); } catch (e) { console.error(e); }
+  // Inicializar datos de la app
+  try { document.getElementById('numGuia').value = numGuiaActual; } catch(e){}
+  try { document.getElementById('lblNumGuia').textContent = 'Guía N° ' + numGuiaActual; } catch(e){}
+  try { document.getElementById('printNumGuia').textContent = numGuiaActual; } catch(e){}
+  try { document.getElementById('fechaGuia').value = hoyISO(); } catch(e){}
+  try { setupAutoCliente(); } catch(e){}
+  try { setupAutoProducto(); } catch(e){}
+  try { setupRutaGestor(); } catch(e){}
+  try { actualizarTotales(); } catch(e){}
+  try { initTraspaso(); } catch(e){}
   try {
     const raw = localStorage.getItem(ALERTA_KEY);
     if (raw) { alertaFilas = JSON.parse(raw) || []; }
-  } catch(e) {}
+  } catch(e){}
   if (typeof alertaRender === 'function') alertaRender();
+
+  // Verificar sesión — mostrar login o app
+  iniciarApp();
 });
 
 function setupRutaGestor() {
