@@ -1630,21 +1630,44 @@ tbody td input[readonly] { color: #475569; cursor: default; }
 
     <!-- HEADER fijo -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid #e2e8f0;flex-shrink:0;">
-      <h2 style="font-size:17px;margin:0;">📊 Importar Productos desde Excel</h2>
+      <h2 style="font-size:17px;margin:0;">📊 Importar desde Excel</h2>
       <button onclick="cerrarModalExcel()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#64748b;line-height:1;">×</button>
+    </div>
+    <!-- Selector tipo importación -->
+    <div style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;flex-shrink:0;">
+      <button id="btnTipoProductos" onclick="setTipoImport('productos')" style="
+        flex:1;padding:11px;font-size:13px;font-weight:700;border:none;cursor:pointer;
+        background:#eff6ff;color:#1a3a5c;border-bottom:3px solid #1a3a5c;
+        font-family:var(--fuente);-webkit-tap-highlight-color:transparent;">
+        📦 Productos
+      </button>
+      <button id="btnTipoClientes" onclick="setTipoImport('clientes')" style="
+        flex:1;padding:11px;font-size:13px;font-weight:700;border:none;cursor:pointer;
+        background:#f8fafc;color:#64748b;border-bottom:3px solid transparent;
+        font-family:var(--fuente);-webkit-tap-highlight-color:transparent;">
+        👥 Clientes
+      </button>
     </div>
 
     <!-- CUERPO scrollable -->
     <div style="flex:1;overflow-y:auto;padding:16px 18px;">
 
-      <!-- Instrucciones -->
-      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#1e40af;">
-        <div style="font-weight:700;margin-bottom:6px;">📋 Formato requerido del Excel:</div>
-        <div>El archivo debe tener estas columnas (en cualquier orden):</div>
+      <!-- Instrucciones dinámicas -->
+      <div id="instrucProductos" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#1e40af;">
+        <div style="font-weight:700;margin-bottom:6px;">📋 Formato requerido:</div>
+        <div>Columnas necesarias (en cualquier orden):</div>
         <div style="margin-top:6px;font-family:monospace;font-size:12px;background:white;padding:6px 10px;border-radius:6px;border:1px solid #bfdbfe;">
           SKU | NOMBRE | PRECIO | MARCA
         </div>
         <div style="margin-top:6px;color:#64748b;">La primera fila debe ser el encabezado.</div>
+      </div>
+      <div id="instrucClientes" style="display:none;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#15803d;">
+        <div style="font-weight:700;margin-bottom:6px;">📋 Formato requerido:</div>
+        <div>Columnas necesarias (en cualquier orden):</div>
+        <div style="margin-top:6px;font-family:monospace;font-size:12px;background:white;padding:6px 10px;border-radius:6px;border:1px solid #86efac;">
+          CODIGO | NOMBRE | RUT | DIRECCION | CIUDAD | TELEFONO
+        </div>
+        <div style="margin-top:6px;color:#16a34a;">Solo NOMBRE es obligatorio. La primera fila debe ser el encabezado.</div>
       </div>
 
       <!-- Origen archivo -->
@@ -5048,35 +5071,40 @@ function renderListaClientes() {
     return;
   }
 
-  lista.innerHTML = filtrados.map(c => `
-    <div class="cliente-card ${c._tipo==='base'?'base':''}">
+  // Guardar referencia para lookup por índice
+  lista._clientesFiltrados = filtrados;
+
+  lista.innerHTML = filtrados.map((c, i) => `
+    <div class="cliente-card ${c._tipo==='base'?'base':''}" style="cursor:default;">
       <div class="cc-info">
         <div class="cc-nombre">${c.nombre} ${c._tipo==='base'?'<span style="font-size:10px;color:#92400e;background:#fef3c7;padding:1px 6px;border-radius:10px;margin-left:4px;">Base</span>':''}</div>
         <div class="cc-rut">${c.rut||'Sin RUT'} · ${c.ciudad||''}</div>
         <div class="cc-dir">${c.direccion||''} ${c.telefono?'· '+c.telefono:''}</div>
       </div>
       <div class="cc-btns">
-        <button class="cc-btn cc-btn-sel" onclick="usarCliente(${JSON.stringify(JSON.stringify(c))})">Usar</button>
+        <button class="cc-btn cc-btn-sel" data-idx="${i}" onclick="usarClienteIdx(this)">Usar</button>
         ${c._tipo==='custom'?`
-          <button class="cc-btn cc-btn-edit" onclick='editarCliente("${c.id}")'>✏️</button>
-          <button class="cc-btn cc-btn-del" onclick='eliminarCliente("${c.id}")'>🗑</button>
+          <button class="cc-btn cc-btn-edit" data-id="${c.id||''}" onclick="editarCliente(this.dataset.id)">✏️</button>
+          <button class="cc-btn cc-btn-del" data-id="${c.id||''}" onclick="eliminarCliente(this.dataset.id)">🗑</button>
         `:''}
       </div>
     </div>
   `).join('');
 }
 
-function usarCliente(jsonStr) {
-  const c = JSON.parse(jsonStr);
-  // Buscar y seleccionar en el select nativo
-  const sel = document.getElementById('selectCliente');
-  if (sel && sel._clientes) {
-    const idx = sel._clientes.findIndex(x => x.rut === c.rut && x.nombre === c.nombre);
-    if (idx >= 0) sel.value = idx;
-  }
+function usarClienteIdx(btn) {
+  const lista = document.getElementById('listaClientesGestor');
+  const idx = parseInt(btn.dataset.idx);
+  const c = lista._clientesFiltrados && lista._clientesFiltrados[idx];
+  if (!c) return;
+  usarCliente(c);
+}
+
+function usarCliente(c) {
+  if (typeof c === 'string') c = JSON.parse(c);
   seleccionarCliente(c);
   cerrarGestorClientes();
-  mostrarToast('✓ Cliente seleccionado', '#2563a8');
+  mostrarToast('✓ ' + c.nombre, '#2563a8');
 }
 
 function mostrarFormCliente(id) {
@@ -7781,7 +7809,22 @@ function generarESCPOS_Traspaso(){
 let excelDatosParsed = [];   // productos parseados listos para importar
 let origenActual = 'local';  // 'local' | 'drive'
 
-function abrirModalExcel() {
+let _tipoImport = 'productos'; // 'productos' | 'clientes'
+
+function setTipoImport(tipo) {
+  _tipoImport = tipo;
+  const esProductos = tipo === 'productos';
+  // Tabs visuales
+  document.getElementById('btnTipoProductos').style.background    = esProductos ? '#eff6ff' : '#f8fafc';
+  document.getElementById('btnTipoProductos').style.color         = esProductos ? '#1a3a5c' : '#64748b';
+  document.getElementById('btnTipoProductos').style.borderBottom  = esProductos ? '3px solid #1a3a5c' : '3px solid transparent';
+  document.getElementById('btnTipoClientes').style.background     = !esProductos ? '#f0fdf4' : '#f8fafc';
+  document.getElementById('btnTipoClientes').style.color          = !esProductos ? '#15803d' : '#64748b';
+  document.getElementById('btnTipoClientes').style.borderBottom   = !esProductos ? '3px solid #16a34a' : '3px solid transparent';
+  // Instrucciones
+  document.getElementById('instrucProductos').style.display = esProductos ? 'block' : 'none';
+  document.getElementById('instrucClientes').style.display  = !esProductos ? 'block' : 'none';
+  // Reset preview
   excelDatosParsed = [];
   document.getElementById('excelLog').style.display = 'none';
   document.getElementById('excelLog').innerHTML = '';
@@ -7790,7 +7833,20 @@ function abrirModalExcel() {
   document.getElementById('btnImportar').style.display = 'none';
   document.getElementById('nombreArchivoLocal').textContent = '';
   document.getElementById('inputExcel').value = '';
+}
+
+function abrirModalExcel() {
+  excelDatosParsed = [];
+  _tipoImport = 'productos';
+  document.getElementById('excelLog').style.display = 'none';
+  document.getElementById('excelLog').innerHTML = '';
+  document.getElementById('excelPreview').style.display = 'none';
+  document.getElementById('excelOpciones').style.display = 'none';
+  document.getElementById('btnImportar').style.display = 'none';
+  document.getElementById('nombreArchivoLocal').textContent = '';
+  document.getElementById('inputExcel').value = '';
   document.getElementById('inputDriveURL').value = '';
+  setTipoImport('productos');
   seleccionarOrigen('local');
   document.getElementById('overlayExcel').classList.add('visible');
 }
@@ -7945,34 +8001,124 @@ function procesarExcel(data, nombre) {
     excelDatosParsed.push({ sku, nombre, precio, marca });
   });
 
-  exLog('✓ ' + excelDatosParsed.length + ' productos válidos encontrados', '#4ade80');
+  if (_tipoImport === 'clientes') {
+    // Parsear como clientes
+    const colCodigo = find(['codigo','code','cod','id']);
+    const colRut    = find(['rut','r.u.t','ruc','nit','cif']);
+    const colDir    = find(['direccion','direccion','address','dir']);
+    const colCiudad = find(['ciudad','city','localidad','comuna']);
+    const colTel    = find(['telefono','tel','phone','celular','movil','fono']);
+
+    excelDatosParsed = [];
+    rows.forEach((row, i) => {
+      const nombre = String(row[colNombre]||'').trim();
+      if (!nombre) return;
+      excelDatosParsed.push({
+        codigo:    colCodigo ? String(row[colCodigo]||'').trim() : 'IMP-' + String(i+1).padStart(4,'0'),
+        nombre,
+        rut:       colRut    ? String(row[colRut]||'').trim()    : '',
+        direccion: colDir    ? String(row[colDir]||'').trim()    : '',
+        ciudad:    colCiudad ? String(row[colCiudad]||'').trim() : 'PUNTA ARENAS',
+        telefono:  colTel    ? String(row[colTel]||'').trim()    : '',
+      });
+    });
+    exLog('✓ ' + excelDatosParsed.length + ' clientes válidos encontrados', '#4ade80');
+  } else {
+    excelDatosParsed = [];
+    rows.forEach((row, i) => {
+      const nombre = String(row[colNombre]||'').trim();
+      if (!nombre) return;
+      const sku    = colSKU    ? String(row[colSKU]||'').trim()    : 'IMP-' + String(i+1).padStart(4,'0');
+      const precio = colPrecio ? parseInt(String(row[colPrecio]).replace(/[^0-9]/g,''))||0 : 0;
+      const marca  = colMarca  ? String(row[colMarca]||'').trim()  : 'Importado';
+      excelDatosParsed.push({ sku, nombre, precio, marca });
+    });
+    exLog('✓ ' + excelDatosParsed.length + ' productos válidos encontrados', '#4ade80');
+  }
   mostrarPreviewExcel();
 }
 
 /* ── Mostrar preview ── */
 function mostrarPreviewExcel() {
   if (!excelDatosParsed.length) return;
+  const esClientes = _tipoImport === 'clientes';
+  const label = esClientes ? 'clientes' : 'productos';
 
   document.getElementById('excelPreviewTitulo').textContent =
-    'Vista previa — ' + excelDatosParsed.length + ' productos (mostrando primeros 10)';
+    'Vista previa — ' + excelDatosParsed.length + ' ' + label + ' (mostrando primeros 10)';
 
   const tbody = document.getElementById('excelPreviewBody');
-  tbody.innerHTML = excelDatosParsed.slice(0,10).map(p =>
-    '<tr style="border-bottom:1px solid #f1f5f9;">' +
-    '<td style="padding:5px 8px;color:#475569;">' + p.sku + '</td>' +
-    '<td style="padding:5px 8px;">' + p.nombre + '</td>' +
-    '<td style="padding:5px 8px;text-align:right;">' + (p.precio ? '$'+p.precio.toLocaleString('es-CL') : '—') + '</td>' +
-    '<td style="padding:5px 8px;color:#64748b;">' + p.marca + '</td>' +
-    '</tr>'
-  ).join('');
+  if (esClientes) {
+    tbody.innerHTML = excelDatosParsed.slice(0,10).map(p =>
+      '<tr style="border-bottom:1px solid #f1f5f9;">' +
+      '<td style="padding:5px 8px;color:#475569;font-size:11px;">' + p.codigo + '</td>' +
+      '<td style="padding:5px 8px;font-weight:600;">' + p.nombre + '</td>' +
+      '<td style="padding:5px 8px;color:#475569;">' + (p.rut||'—') + '</td>' +
+      '<td style="padding:5px 8px;color:#64748b;font-size:11px;">' + (p.telefono||'—') + '</td>' +
+      '</tr>'
+    ).join('');
+  } else {
+    tbody.innerHTML = excelDatosParsed.slice(0,10).map(p =>
+      '<tr style="border-bottom:1px solid #f1f5f9;">' +
+      '<td style="padding:5px 8px;color:#475569;">' + p.sku + '</td>' +
+      '<td style="padding:5px 8px;">' + p.nombre + '</td>' +
+      '<td style="padding:5px 8px;text-align:right;">' + (p.precio ? '$'+p.precio.toLocaleString('es-CL') : '—') + '</td>' +
+      '<td style="padding:5px 8px;color:#64748b;">' + p.marca + '</td>' +
+      '</tr>'
+    ).join('');
+  }
 
   document.getElementById('excelPreview').style.display = 'block';
   document.getElementById('excelOpciones').style.display = 'block';
   document.getElementById('btnImportar').style.display = 'inline-flex';
+  document.getElementById('btnImportar').textContent = esClientes
+    ? '✅ Importar ' + excelDatosParsed.length + ' Clientes'
+    : '✅ Importar ' + excelDatosParsed.length + ' Productos';
 }
 
 /* ── Confirmar importación ── */
 function confirmarImportacion() {
+  if (!excelDatosParsed.length) return;
+
+  if (_tipoImport === 'clientes') {
+    // Importar clientes
+    const extra = getClientesStorage();
+    const existCodigos = new Set(extra.map(x => x.codigo));
+    const existNombres = new Set([...extra, ...CLIENTES].map(x => x.nombre.toLowerCase()));
+    let nuevos = 0, actualizados = 0;
+
+    excelDatosParsed.forEach(cl => {
+      const clConId = { ...cl, id: cl.codigo || ('IMP-' + Date.now() + '-' + Math.random().toString(36).slice(2,6)) };
+      const idxExist = extra.findIndex(x => x.codigo === cl.codigo || x.nombre.toLowerCase() === cl.nombre.toLowerCase());
+      if (idxExist >= 0) {
+        extra[idxExist] = { ...extra[idxExist], ...clConId };
+        actualizados++;
+      } else {
+        extra.push(clConId);
+        nuevos++;
+      }
+    });
+
+    localStorage.setItem('clientes_icb', JSON.stringify(extra));
+    // Recargar combos
+    try { setupAutoCliente(); } catch(e) {}
+    try { comboRecargar('cliente'); } catch(e) {}
+    cerrarModalExcel();
+    mostrarToast('✅ ' + nuevos + ' clientes nuevos, ' + actualizados + ' actualizados', '#16a34a');
+
+    // Sync a Supabase
+    excelDatosParsed.forEach(cl => {
+      try {
+        supa.from('clientes').upsert({
+          codigo: cl.codigo, nombre: cl.nombre, rut: cl.rut||'',
+          direccion: cl.direccion||'', ciudad: cl.ciudad||'PUNTA ARENAS',
+          telefono: cl.telefono||''
+        }, {onConflict:'codigo'}).then(() => {});
+      } catch(e) {}
+    });
+    return;
+  }
+
   if (!excelDatosParsed.length) return;
   const modo = document.querySelector('input[name="modoImport"]:checked').value;
 
