@@ -1860,49 +1860,38 @@ tbody td input[readonly] { color: #475569; cursor: default; }
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:32px 24px;
 ">
-  <div style="text-align:center;margin-bottom:36px;">
-    <div style="font-size:52px;margin-bottom:12px;">🏢</div>
-    <div style="font-size:24px;font-weight:900;color:white;letter-spacing:1px;">ICB MARCO POLO</div>
-    <div style="font-size:13px;color:rgba(255,255,255,0.65);margin-top:4px;">Sistema de Despacho · ICB.CL</div>
+  <div style="text-align:center;margin-bottom:32px;">
+    <div style="font-size:56px;margin-bottom:10px;">🏢</div>
+    <div style="font-size:26px;font-weight:900;color:white;letter-spacing:1px;">ICB MARCO POLO</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px;">Sistema de Despacho · ICB.CL</div>
   </div>
 
-  <div style="
-    background:white;border-radius:20px;padding:28px 24px;
-    width:100%;max-width:360px;
-    box-shadow:0 20px 60px rgba(0,0,0,0.3);
-  ">
-    <div style="font-size:17px;font-weight:800;color:#1a3a5c;margin-bottom:4px;">Iniciar Sesión</div>
-    <div style="font-size:12px;color:#94a3b8;margin-bottom:20px;">Ingresa tus credenciales de acceso</div>
+  <div style="background:white;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="font-size:17px;font-weight:800;color:#1a3a5c;margin-bottom:4px;">Selecciona tu ruta</div>
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:20px;">Elige tu código de gestor e ingresa tu PIN</div>
 
     <div style="margin-bottom:14px;">
-      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px;">EMAIL</label>
-      <input id="loginEmail" type="email" inputmode="email" autocomplete="email"
-        placeholder="gestor@icb.cl"
-        style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;
-               font-size:15px;font-family:inherit;box-sizing:border-box;outline:none;
-               -webkit-appearance:none;">
+      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px;">GESTOR / RUTA</label>
+      <select id="loginGestor" style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;font-family:inherit;box-sizing:border-box;outline:none;-webkit-appearance:none;background:white;">
+        <option value="">— Seleccionar —</option>
+        <option value="C89">C89 — Anibal Valdivia</option>
+        <option value="C88">C88 — Alex Aburto</option>
+        <option value="C90">C90 — Matias Montt</option>
+      </select>
     </div>
 
     <div style="margin-bottom:20px;">
-      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px;">CONTRASEÑA</label>
-      <div style="position:relative;">
-        <input id="loginPass" type="password" autocomplete="current-password"
-          placeholder="••••••••"
-          style="width:100%;padding:12px 44px 12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;
-                 font-size:15px;font-family:inherit;box-sizing:border-box;outline:none;
-                 -webkit-appearance:none;"
-          onkeydown="if(event.key==='Enter')loginSubmit()">
-        <button onclick="toggleLoginPass()" style="
-          position:absolute;right:12px;top:50%;transform:translateY(-50%);
-          background:none;border:none;font-size:18px;cursor:pointer;color:#94a3b8;padding:4px;
-        " id="loginPassToggle">👁</button>
-      </div>
+      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px;">PIN DE ACCESO</label>
+      <input id="loginPin" type="password" inputmode="numeric" maxlength="6"
+        placeholder="••••••"
+        style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:20px;font-family:inherit;box-sizing:border-box;outline:none;-webkit-appearance:none;text-align:center;letter-spacing:8px;"
+        onkeydown="if(event.key==='Enter')loginSubmit()">
     </div>
 
     <div id="loginError" style="
       display:none;background:#fef2f2;border:1px solid #fecaca;
       border-radius:8px;padding:10px 12px;margin-bottom:14px;
-      font-size:13px;color:#dc2626;font-weight:600;
+      font-size:13px;color:#dc2626;font-weight:600;text-align:center;
     "></div>
 
     <button onclick="loginSubmit()" id="loginBtn" style="
@@ -3265,47 +3254,31 @@ let _perfilUsuario = null;
 let _suscripcion   = null;
 
 // ── AUTH ──
-async function iniciarApp() {
-  // Mostrar login por defecto mientras verificamos sesión
-  mostrarLogin();
-
+function iniciarApp() {
+  // Verificar sesión local guardada
   try {
-    const { data: { session } } = await supa.auth.getSession();
-    if (session) {
-      _sesionUsuario = session;
-      await _cargarPerfil(session.user.id);
-      mostrarApp();
+    const raw = localStorage.getItem('icb_sesion');
+    if (raw) {
+      const ses = JSON.parse(raw);
+      const horasDesde = (Date.now() - ses.ts) / 3600000;
+      if (horasDesde < 12 && ses.gestor && _GESTORES_INFO[ses.gestor]) {
+        _perfilUsuario = _GESTORES_INFO[ses.gestor];
+        mostrarApp();
+        return;
+      }
     }
-  } catch(e) {
-    console.error('[iniciarApp]', e);
-    mostrarLogin();
-  }
-
-  supa.auth.onAuthStateChange(async (event, session) => {
-    console.log('[Auth]', event);
-    if (event === 'SIGNED_IN' && session) {
-      _sesionUsuario = session;
-      await _cargarPerfil(session.user.id);
-      mostrarApp();
-    } else if (event === 'SIGNED_OUT') {
-      _sesionUsuario = null;
-      _perfilUsuario = null;
-      mostrarLogin();
-    }
-  });
+  } catch(e) {}
+  mostrarLogin();
 }
 
-async function _cargarPerfil(uid) {
-  const { data } = await supa.from('gestores').select('*').eq('auth_id', uid).single();
-  if (data) {
-    _perfilUsuario = data;
-    // Autocompletar gestor en la guía
-    const gEl = document.getElementById('gestor');
-    if (gEl && !gEl.value) gEl.value = data.codigo + ' — ' + data.nombre;
-    // Mostrar nombre en drawer
-    const subEl = document.querySelector('.menu-header .m-sub');
-    if (subEl) subEl.textContent = data.nombre + ' · ' + data.codigo;
-  }
+function _cargarPerfil() {
+  if (!_perfilUsuario) return;
+  // Autocompletar gestor en la guía
+  const gEl = document.getElementById('gestor');
+  if (gEl && !gEl.value) gEl.value = _perfilUsuario.codigo + ' — ' + _perfilUsuario.nombre;
+  // Mostrar nombre en drawer
+  const subEl = document.querySelector('.menu-header .m-sub');
+  if (subEl) subEl.textContent = _perfilUsuario.nombre + ' · ' + _perfilUsuario.codigo;
 }
 
 function mostrarLogin() {
@@ -3332,43 +3305,61 @@ function mostrarApp() {
   document.getElementById('pantallaLogin').style.display = 'none';
   document.getElementById('bottomNav').style.display = 'flex';
   document.getElementById('fabMenu').style.display = 'flex';
+  _cargarPerfil();
   cambiarTab('guia');
-  _suscribirCambios();
-  setTimeout(syncFromCloud, 800);
+  // Sync en segundo plano si hay conexión
+  setTimeout(() => {
+    if (typeof syncFromCloud === 'function') {
+      try { syncFromCloud(); } catch(e) {}
+    }
+  }, 1000);
 }
 
-async function loginSubmit() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass  = document.getElementById('loginPass').value;
-  const errEl = document.getElementById('loginError');
-  const btn   = document.getElementById('loginBtn');
+// ── PINs de acceso por gestor (SHA simple) ──
+// PIN C89: 1234 → cambiar acá
+const _PINS = {
+  'C89': '1234',
+  'C88': '1234',
+  'C90': '1234'
+};
+const _GESTORES_INFO = {
+  'C89': { codigo:'C89', nombre:'Anibal Valdivia',  rut:'13.022.545-4' },
+  'C88': { codigo:'C88', nombre:'Alex Aburto',      rut:'' },
+  'C90': { codigo:'C90', nombre:'Matias Montt',     rut:'' }
+};
+
+function loginSubmit() {
+  const gestor = document.getElementById('loginGestor').value;
+  const pin    = document.getElementById('loginPin').value.trim();
+  const errEl  = document.getElementById('loginError');
+  const btn    = document.getElementById('loginBtn');
   errEl.style.display = 'none';
 
-  if (!email || !pass) {
-    errEl.textContent = 'Completa todos los campos';
+  if (!gestor) {
+    errEl.textContent = 'Selecciona tu ruta de gestor';
     errEl.style.display = 'block';
     return;
   }
-
-  btn.textContent = '⏳ Ingresando…';
-  btn.disabled = true;
-
-  try {
-    const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
-    if (error) throw error;
-    // Login OK — mostrarApp() se llama desde onAuthStateChange
-    btn.textContent = '✅ Accediendo…';
-  } catch(e) {
-    btn.textContent = 'Ingresar';
-    btn.disabled = false;
-    let msg = 'Email o contraseña incorrectos';
-    if (e.message && e.message.includes('Invalid')) msg = 'Credenciales incorrectas';
-    if (e.message && e.message.includes('network')) msg = 'Sin conexión — revisa internet';
-    if (e.message && e.message.includes('fetch')) msg = 'Error de conexión con el servidor';
-    errEl.textContent = msg;
+  if (!pin) {
+    errEl.textContent = 'Ingresa tu PIN de acceso';
     errEl.style.display = 'block';
-    console.error('[Login error]', e.message);
+    return;
   }
+  if (_PINS[gestor] !== pin) {
+    errEl.textContent = 'PIN incorrecto';
+    errEl.style.display = 'block';
+    document.getElementById('loginPin').value = '';
+    return;
+  }
+
+  // Login OK
+  _perfilUsuario = _GESTORES_INFO[gestor];
+  localStorage.setItem('icb_sesion', JSON.stringify({ gestor, nombre: _perfilUsuario.nombre, ts: Date.now() }));
+  btn.textContent = '✅ Accediendo…';
+  setTimeout(() => {
+    btn.textContent = 'Ingresar';
+    mostrarApp();
+  }, 400);
 }
 
 function toggleLoginPass() {
@@ -3376,10 +3367,12 @@ function toggleLoginPass() {
   inp.type = inp.type === 'password' ? 'text' : 'password';
 }
 
-async function cerrarSesion() {
+function cerrarSesion() {
   if (!confirm('¿Cerrar sesión?')) return;
-  if (_suscripcion) { supa.removeChannel(_suscripcion); _suscripcion = null; }
-  await supa.auth.signOut();
+  localStorage.removeItem('icb_sesion');
+  _perfilUsuario = null;
+  _sesionUsuario = null;
+  mostrarLogin();
 }
 
 // ── SYNC CLOUD ──
