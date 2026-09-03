@@ -3302,17 +3302,20 @@ function mostrarLogin() {
 }
 
 function mostrarApp() {
-  document.getElementById('pantallaLogin').style.display = 'none';
-  document.getElementById('bottomNav').style.display = 'flex';
-  document.getElementById('fabMenu').style.display = 'flex';
+  // Ocultar login
+  const pl = document.getElementById('pantallaLogin');
+  if (pl) pl.style.display = 'none';
+  // Mostrar nav y fab
+  const bn = document.getElementById('bottomNav');
+  const fm = document.getElementById('fabMenu');
+  if (bn) bn.style.display = 'flex';
+  if (fm) fm.style.display = 'flex';
+  // Activar pantalla principal
+  const pp = document.getElementById('pantallaPrincipal');
+  if (pp) { pp.style.display = 'flex'; pp.classList.add('active'); }
+  // Cargar perfil y tab
   _cargarPerfil();
   cambiarTab('guia');
-  // Sync en segundo plano si hay conexión
-  setTimeout(() => {
-    if (typeof syncFromCloud === 'function') {
-      try { syncFromCloud(); } catch(e) {}
-    }
-  }, 1000);
 }
 
 // ── PINs de acceso por gestor (SHA simple) ──
