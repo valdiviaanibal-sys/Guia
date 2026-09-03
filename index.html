@@ -1842,7 +1842,7 @@ tbody td input[readonly] { color: #475569; cursor: default; }
 </div>
 
 <!-- ===== PANTALLA PRINCIPAL ===== -->
-<div class="app-screen" id="pantallaPrincipal">
+<div class="app-screen active" id="pantallaPrincipal">
 
   <!-- HEADER SOLO IMPRESIÓN — GUÍA DE DESPACHO -->
 
@@ -1854,59 +1854,6 @@ tbody td input[readonly] { color: #475569; cursor: default; }
 </div>
 
 <!-- ===== PANTALLA LOGIN ===== -->
-<div id="pantallaLogin" style="
-  position:fixed;inset:0;z-index:9999;
-  background:linear-gradient(160deg,#1a3a5c 0%,#2563a8 60%,#1e40af 100%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:32px 24px;
-">
-  <div style="text-align:center;margin-bottom:32px;">
-    <div style="font-size:56px;margin-bottom:10px;">🏢</div>
-    <div style="font-size:26px;font-weight:900;color:white;letter-spacing:1px;">ICB MARCO POLO</div>
-    <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px;">Sistema de Despacho · ICB.CL</div>
-  </div>
-
-  <div style="background:white;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-    <div style="font-size:17px;font-weight:800;color:#1a3a5c;margin-bottom:4px;">Selecciona tu ruta</div>
-    <div style="font-size:12px;color:#94a3b8;margin-bottom:20px;">Elige tu código de gestor e ingresa tu PIN</div>
-
-    <div style="margin-bottom:14px;">
-      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px;">GESTOR / RUTA</label>
-      <select id="loginGestor" style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;font-family:inherit;box-sizing:border-box;outline:none;-webkit-appearance:none;background:white;">
-        <option value="">— Seleccionar —</option>
-        <option value="C89">C89 — Anibal Valdivia</option>
-        <option value="C88">C88 — Alex Aburto</option>
-        <option value="C90">C90 — Matias Montt</option>
-      </select>
-    </div>
-
-    <div style="margin-bottom:20px;">
-      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px;">PIN DE ACCESO</label>
-      <input id="loginPin" type="password" inputmode="numeric" maxlength="6"
-        placeholder="••••••"
-        style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:20px;font-family:inherit;box-sizing:border-box;outline:none;-webkit-appearance:none;text-align:center;letter-spacing:8px;"
-        onkeydown="if(event.key==='Enter')loginSubmit()">
-    </div>
-
-    <div id="loginError" style="
-      display:none;background:#fef2f2;border:1px solid #fecaca;
-      border-radius:8px;padding:10px 12px;margin-bottom:14px;
-      font-size:13px;color:#dc2626;font-weight:600;text-align:center;
-    "></div>
-
-    <button onclick="loginSubmit()" id="loginBtn" style="
-      width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#2563a8);
-      color:white;border:none;border-radius:12px;font-size:16px;font-weight:800;
-      cursor:pointer;-webkit-tap-highlight-color:transparent;
-      box-shadow:0 4px 16px rgba(37,99,168,0.4);
-    ">Ingresar</button>
-
-    <div style="text-align:center;margin-top:16px;font-size:11px;color:#94a3b8;">
-      Punta Arenas, Chile · v3.27
-    </div>
-  </div>
-</div>
-
 <!-- ===== OVERLAY ===== -->
 <div id="menuOverlay" onclick="cerrarMenu()"></div>
 
@@ -2092,7 +2039,7 @@ tbody td input[readonly] { color: #475569; cursor: default; }
 </div>
 
 <!-- ===== BOTTOM NAV ===== -->
-<div class="bottom-nav" id="bottomNav" style="display:none;">
+<div class="bottom-nav" id="bottomNav">
   <button class="bottom-nav-item active" id="bnGuia" onclick="cambiarTab('guia')">
     <span class="bn-ico">📄</span>Guía
   </button>
@@ -2108,7 +2055,7 @@ tbody td input[readonly] { color: #475569; cursor: default; }
 </div>
 
 <!-- ===== FAB ===== -->
-<div id="fabMenu" style="display:none;">
+<div id="fabMenu">
   <button id="fabMain" onclick="toggleFab()" aria-label="Acciones rápidas">＋</button>
   <div id="fabActions">
     <div class="fab-item">
@@ -2147,12 +2094,7 @@ tbody td input[readonly] { color: #475569; cursor: default; }
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
       <div id="badgeEstado"><span class="badge badge-borrador">Borrador</span></div>
-      <button onclick="cerrarSesion()" title="Cerrar sesión" style="
-        background:rgba(255,255,255,0.15);border:none;color:white;
-        width:32px;height:32px;border-radius:50%;font-size:15px;
-        cursor:pointer;display:flex;align-items:center;justify-content:center;
-        -webkit-tap-highlight-color:transparent;flex-shrink:0;
-      ">⏏️</button>
+
     </div>
   </div>
   <div class="tabs-nav">
@@ -3255,20 +3197,10 @@ let _suscripcion   = null;
 
 // ── AUTH ──
 function iniciarApp() {
-  // Verificar sesión local guardada
-  try {
-    const raw = localStorage.getItem('icb_sesion');
-    if (raw) {
-      const ses = JSON.parse(raw);
-      const horasDesde = (Date.now() - ses.ts) / 3600000;
-      if (horasDesde < 12 && ses.gestor && _GESTORES_INFO[ses.gestor]) {
-        _perfilUsuario = _GESTORES_INFO[ses.gestor];
-        mostrarApp();
-        return;
-      }
-    }
-  } catch(e) {}
-  mostrarLogin();
+  // Sin autenticación — acceso directo
+  cambiarTab('guia');
+  // Cargar historial desde la nube en segundo plano
+  setTimeout(_supaCargarHistorial, 1500);
 }
 
 function _cargarPerfil() {
@@ -3282,39 +3214,10 @@ function _cargarPerfil() {
 }
 
 function mostrarLogin() {
-  document.getElementById('pantallaLogin').style.display = 'flex';
-  document.getElementById('pantallaPrincipal').style.display = 'none';
-  const pt = document.getElementById('pantallaTraspaso');
-  const pa = document.getElementById('pantallaAlerta');
-  if (pt) pt.style.display = 'none';
-  if (pa) pa.style.display = 'none';
-  const bn = document.getElementById('bottomNav');
-  const fm = document.getElementById('fabMenu');
-  if (bn) bn.style.display = 'none';
-  if (fm) fm.style.display = 'none';
-  // Limpiar error y re-enfocar email
-  const errEl = document.getElementById('loginError');
-  if (errEl) errEl.style.display = 'none';
-  setTimeout(() => {
-    const em = document.getElementById('loginEmail');
-    if (em) em.focus();
-  }, 300);
+  // Sin login — no hacer nada
 }
 
 function mostrarApp() {
-  // Ocultar login
-  const pl = document.getElementById('pantallaLogin');
-  if (pl) pl.style.display = 'none';
-  // Mostrar nav y fab
-  const bn = document.getElementById('bottomNav');
-  const fm = document.getElementById('fabMenu');
-  if (bn) bn.style.display = 'flex';
-  if (fm) fm.style.display = 'flex';
-  // Activar pantalla principal
-  const pp = document.getElementById('pantallaPrincipal');
-  if (pp) { pp.style.display = 'flex'; pp.classList.add('active'); }
-  // Cargar perfil y tab
-  _cargarPerfil();
   cambiarTab('guia');
 }
 
@@ -3371,11 +3274,7 @@ function toggleLoginPass() {
 }
 
 function cerrarSesion() {
-  if (!confirm('¿Cerrar sesión?')) return;
-  localStorage.removeItem('icb_sesion');
-  _perfilUsuario = null;
-  _sesionUsuario = null;
-  mostrarLogin();
+  // Sin sesión que cerrar
 }
 
 // ── SYNC CLOUD ──
@@ -3438,6 +3337,66 @@ async function guardarEnNube(tipo, datos) {
     }, { onConflict: 'tipo,numero,usuario_id' });
     mostrarToast('☁️ Guardado en la nube', '#2563a8');
   } catch(e) { console.warn('guardarEnNube error', e); }
+}
+
+
+// ── SYNC SILENCIOSO A SUPABASE (sin login) ──
+async function _supaSync(tipo, datos) {
+  try {
+    // Guardar en Supabase usando anon key (sin auth)
+    await supa.from('historial_publico').upsert({
+      tipo,
+      numero: String(datos.num || datos.id || ''),
+      datos: JSON.stringify(datos),
+      dispositivo: navigator.userAgent.slice(0,50),
+      fecha: datos.fecha || new Date().toISOString().slice(0,10),
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'tipo,numero' });
+    console.log('[Sync] OK:', tipo, datos.num || datos.id);
+  } catch(e) {
+    console.warn('[Sync] Sin conexión — solo local:', e.message);
+  }
+}
+
+// ── CARGAR HISTORIAL DESDE SUPABASE AL INICIAR ──
+async function _supaCargarHistorial() {
+  try {
+    // Cargar guías
+    const { data: guias } = await supa.from('historial_publico')
+      .select('*').eq('tipo','guia').order('updated_at',{ascending:false}).limit(200);
+    if (guias && guias.length > 0) {
+      const local = JSON.parse(localStorage.getItem('guias_icb') || '[]');
+      const localIds = new Set(local.map(g => String(g.num || g.id)));
+      const nuevas = guias
+        .filter(g => !localIds.has(g.numero))
+        .map(g => JSON.parse(g.datos));
+      if (nuevas.length > 0) {
+        const merged = [...nuevas, ...local];
+        localStorage.setItem('guias_icb', JSON.stringify(merged));
+        console.log('[Sync] Cargadas', nuevas.length, 'guías desde la nube');
+      }
+    }
+    // Cargar traspasos
+    const { data: traspasos } = await supa.from('historial_publico')
+      .select('*').eq('tipo','traspaso').order('updated_at',{ascending:false}).limit(200);
+    if (traspasos && traspasos.length > 0) {
+      const local = JSON.parse(localStorage.getItem('traspasos_icb') || '[]');
+      const localIds = new Set(local.map(g => String(g.id)));
+      const nuevos = traspasos
+        .filter(t => !localIds.has(t.numero))
+        .map(t => JSON.parse(t.datos));
+      if (nuevos.length > 0) {
+        const merged = [...nuevos, ...local];
+        localStorage.setItem('traspasos_icb', JSON.stringify(merged));
+        console.log('[Sync] Cargados', nuevos.length, 'traspasos desde la nube');
+      }
+    }
+    if ((guias && guias.length) || (traspasos && traspasos.length)) {
+      mostrarToast('☁️ Historial sincronizado', '#2563a8');
+    }
+  } catch(e) {
+    console.warn('[Sync] No se pudo cargar historial:', e.message);
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -5315,6 +5274,8 @@ function guardarGuia() {
   renderTabla(); // actualizar colores stock
   mostrarToast('💾 Guía guardada correctamente', '#16a34a');
   if (bajos.length) setTimeout(() => stockMostrarAlertas(bajos, 'Guía'), 800);
+  // Sync silencioso a Supabase
+  _supaSync('guia', guia);
 }
 
 function abrirHistorial() {
@@ -5927,6 +5888,8 @@ function tGuardar() {
   tRenderTabla();
   mostrarToast('💾 Traspaso guardado', '#16a34a');
   if (bajos.length) setTimeout(() => stockMostrarAlertas(bajos, 'Traspaso'), 800);
+  // Sync silencioso a Supabase
+  _supaSync('traspaso', doc);
 }
 
 function tImprimir() {
