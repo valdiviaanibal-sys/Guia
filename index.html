@@ -3266,15 +3266,23 @@ let _suscripcion   = null;
 
 // ── AUTH ──
 async function iniciarApp() {
-  const { data: { session } } = await supa.auth.getSession();
-  if (session) {
-    _sesionUsuario = session;
-    await _cargarPerfil(session.user.id);
-    mostrarApp();
-  } else {
+  // Mostrar login por defecto mientras verificamos sesión
+  mostrarLogin();
+
+  try {
+    const { data: { session } } = await supa.auth.getSession();
+    if (session) {
+      _sesionUsuario = session;
+      await _cargarPerfil(session.user.id);
+      mostrarApp();
+    }
+  } catch(e) {
+    console.error('[iniciarApp]', e);
     mostrarLogin();
   }
+
   supa.auth.onAuthStateChange(async (event, session) => {
+    console.log('[Auth]', event);
     if (event === 'SIGNED_IN' && session) {
       _sesionUsuario = session;
       await _cargarPerfil(session.user.id);
@@ -3303,10 +3311,21 @@ async function _cargarPerfil(uid) {
 function mostrarLogin() {
   document.getElementById('pantallaLogin').style.display = 'flex';
   document.getElementById('pantallaPrincipal').style.display = 'none';
-  document.getElementById('pantallaTraspaso') && (document.getElementById('pantallaTraspaso').style.display='none');
-  document.getElementById('pantallaAlerta')   && (document.getElementById('pantallaAlerta').style.display='none');
-  document.getElementById('bottomNav').style.display = 'none';
-  document.getElementById('fabMenu').style.display = 'none';
+  const pt = document.getElementById('pantallaTraspaso');
+  const pa = document.getElementById('pantallaAlerta');
+  if (pt) pt.style.display = 'none';
+  if (pa) pa.style.display = 'none';
+  const bn = document.getElementById('bottomNav');
+  const fm = document.getElementById('fabMenu');
+  if (bn) bn.style.display = 'none';
+  if (fm) fm.style.display = 'none';
+  // Limpiar error y re-enfocar email
+  const errEl = document.getElementById('loginError');
+  if (errEl) errEl.style.display = 'none';
+  setTimeout(() => {
+    const em = document.getElementById('loginEmail');
+    if (em) em.focus();
+  }, 300);
 }
 
 function mostrarApp() {
@@ -3324,11 +3343,32 @@ async function loginSubmit() {
   const errEl = document.getElementById('loginError');
   const btn   = document.getElementById('loginBtn');
   errEl.style.display = 'none';
-  if (!email || !pass) { errEl.textContent='Completa todos los campos'; errEl.style.display='block'; return; }
-  btn.textContent = 'Ingresando…'; btn.disabled = true;
-  const { error } = await supa.auth.signInWithPassword({ email, password: pass });
-  btn.textContent = 'Ingresar'; btn.disabled = false;
-  if (error) { errEl.textContent = 'Email o contraseña incorrectos'; errEl.style.display='block'; }
+
+  if (!email || !pass) {
+    errEl.textContent = 'Completa todos los campos';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.textContent = '⏳ Ingresando…';
+  btn.disabled = true;
+
+  try {
+    const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
+    // Login OK — mostrarApp() se llama desde onAuthStateChange
+    btn.textContent = '✅ Accediendo…';
+  } catch(e) {
+    btn.textContent = 'Ingresar';
+    btn.disabled = false;
+    let msg = 'Email o contraseña incorrectos';
+    if (e.message && e.message.includes('Invalid')) msg = 'Credenciales incorrectas';
+    if (e.message && e.message.includes('network')) msg = 'Sin conexión — revisa internet';
+    if (e.message && e.message.includes('fetch')) msg = 'Error de conexión con el servidor';
+    errEl.textContent = msg;
+    errEl.style.display = 'block';
+    console.error('[Login error]', e.message);
+  }
 }
 
 function toggleLoginPass() {
@@ -3405,8 +3445,10 @@ async function guardarEnNube(tipo, datos) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Iniciar autenticación Supabase
-  if (typeof iniciarApp === 'function') iniciarApp();
+  // Iniciar autenticación Supabase — esperar que SDK esté listo
+  setTimeout(() => {
+    if (typeof iniciarApp === 'function') iniciarApp();
+  }, 200);
   try {
     document.getElementById('numGuia').value = numGuiaActual;
     document.getElementById('lblNumGuia').textContent = 'Guía N° ' + numGuiaActual;
