@@ -5,6 +5,319 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Guía de Despacho – ICB. MARCO POLO</title>
 <style>
+
+/* ===== MENÚ LATERAL (DRAWER) ===== */
+#menuOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 900;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+#menuOverlay.open { display: block; }
+
+#menuDrawer {
+  position: fixed;
+  top: 0; left: -300px;
+  width: 300px;
+  height: 100%;
+  background: #fff;
+  z-index: 901;
+  box-shadow: 6px 0 32px rgba(0,0,0,0.22);
+  display: flex;
+  flex-direction: column;
+  transition: left 0.3s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+#menuDrawer.open { left: 0; }
+
+/* Cabecera del drawer */
+.menu-header {
+  background: linear-gradient(135deg, #1a3a5c 0%, #2563a8 100%);
+  color: white;
+  padding: 48px 20px 20px;
+  flex-shrink: 0;
+  position: relative;
+}
+.menu-header .m-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.menu-header .m-avatar {
+  width: 42px; height: 42px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.menu-header .m-logo {
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+.menu-header .m-sub {
+  font-size: 11px;
+  opacity: 0.65;
+  margin-top: 1px;
+}
+.menu-header .m-version {
+  position: absolute;
+  top: 14px; right: 14px;
+  font-size: 10px;
+  opacity: 0.5;
+  background: rgba(255,255,255,0.12);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.menu-btn-cerrar {
+  position: absolute;
+  top: 12px; left: 12px;
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: white;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Tabs rápidos dentro del drawer */
+.menu-tabs {
+  display: flex;
+  border-bottom: 1px solid #e8edf2;
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+.menu-tab {
+  flex: 1;
+  padding: 11px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s;
+}
+.menu-tab .mt-ico { font-size: 18px; }
+.menu-tab.active {
+  color: var(--azul);
+  border-bottom-color: var(--azul);
+  background: white;
+}
+
+/* Paneles del drawer */
+.menu-panel { display: none; flex: 1; overflow-y: auto; }
+.menu-panel.active { display: block; }
+
+/* Secciones */
+.menu-section {
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f4f8;
+}
+.menu-section:last-child { border-bottom: none; }
+.menu-section-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  padding: 10px 20px 4px;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e2a38;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  transition: background 0.12s;
+}
+.menu-item:active { background: #eff6ff; transform: scale(0.98); }
+.menu-item .m-ico {
+  font-size: 19px;
+  width: 26px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.menu-item .m-badge {
+  margin-left: auto;
+  background: var(--azul);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+.menu-item.danger { color: #dc2626; }
+.menu-item.danger .m-ico { filter: grayscale(0); }
+.menu-item.tab-active {
+  background: linear-gradient(90deg, #eff6ff, transparent);
+  color: var(--azul);
+  font-weight: 700;
+  border-left: 3px solid var(--azul);
+}
+.menu-item.tab-active .m-ico { transform: scale(1.1); }
+
+/* Footer del drawer */
+.menu-footer {
+  padding: 14px 20px;
+  border-top: 1px solid #f0f4f8;
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+  flex-shrink: 0;
+  background: #fafbfc;
+}
+
+/* ── HEADER APP ── */
+.btn-menu {
+  background: rgba(255,255,255,0.12);
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 10px;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.btn-menu:active { background: rgba(255,255,255,0.25); }
+
+/* ── BOTTOM NAV — reemplaza tabs ── */
+.tabs-nav { display: none !important; }
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 62px;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  z-index: 200;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #94a3b8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s;
+  padding: 0;
+  padding-bottom: 2px;
+}
+.bottom-nav-item .bn-ico { font-size: 22px; line-height: 1; }
+.bottom-nav-item.active { color: var(--azul); }
+.bottom-nav-item.active .bn-ico {
+  filter: drop-shadow(0 2px 4px rgba(26,58,92,0.3));
+  transform: scale(1.1);
+}
+
+/* Ajuste de contenido para no quedar detrás del bottom-nav */
+.contenido { padding-bottom: 80px !important; }
+
+/* ── BARRA ACCIONES — FAB strip flotante ── */
+.barra-acciones {
+  display: none !important;
+}
+
+/* FAB principal */
+#fabMenu {
+  position: fixed;
+  bottom: 74px; right: 16px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 10px;
+}
+#fabMain {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: var(--azul);
+  color: white;
+  border: none;
+  font-size: 24px;
+  box-shadow: 0 4px 18px rgba(26,58,92,0.4);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s, background 0.2s;
+  flex-shrink: 0;
+}
+#fabMain.open { transform: rotate(45deg); background: #dc2626; }
+#fabActions {
+  display: none;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 8px;
+}
+#fabActions.open { display: flex; }
+.fab-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+.fab-item-label {
+  background: #1e293b;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.fab-item-btn {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: none;
+  color: white;
+  font-size: 18px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* ===== VARIABLES ===== */
 :root {
   --azul: #1a3a5c;
@@ -1538,6 +1851,229 @@ tbody td input[readonly] { color: #475569; cursor: default; }
     <div class="print-sucursal">(NO VALIDO COMO BOLETA)</div>
 </div>
 
+<!-- ===== OVERLAY ===== -->
+<div id="menuOverlay" onclick="cerrarMenu()"></div>
+
+<!-- ===== DRAWER LATERAL ===== -->
+<div id="menuDrawer">
+
+  <!-- Cabecera -->
+  <div class="menu-header">
+    <button class="menu-btn-cerrar" onclick="cerrarMenu()" aria-label="Cerrar">✕</button>
+    <div class="m-version">v3.27</div>
+    <div class="m-brand">
+      <div class="m-avatar">🏢</div>
+      <div>
+        <div class="m-logo">ICB MARCO POLO</div>
+        <div class="m-sub">ICB.CL · Punta Arenas, Chile</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs rápidos -->
+  <div class="menu-tabs">
+    <button class="menu-tab active" id="mPanelGuiaTab" onclick="switchMenuPanel('guia')">
+      <span class="mt-ico">📄</span>Guía
+    </button>
+    <button class="menu-tab" id="mPanelTraspasoTab" onclick="switchMenuPanel('traspaso')">
+      <span class="mt-ico">🔄</span>Traspaso
+    </button>
+    <button class="menu-tab" id="mPanelAlerTab" onclick="switchMenuPanel('alerta')">
+      <span class="mt-ico">⚠️</span>Alerta
+    </button>
+    <button class="menu-tab" id="mPanelSisTab" onclick="switchMenuPanel('sistema')">
+      <span class="mt-ico">⚙️</span>Sistema
+    </button>
+  </div>
+
+  <!-- Panel Guía -->
+  <div class="menu-panel active" id="mPanelGuia">
+    <div class="menu-section">
+      <div class="menu-section-label">Documento</div>
+      <button class="menu-item tab-active" id="mTabGuia" onclick="cambiarTab('guia');cerrarMenu()">
+        <span class="m-ico">📄</span> Guía de Despacho
+      </button>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-label">Acciones</div>
+      <button class="menu-item" onclick="guardarGuia();cerrarMenu()">
+        <span class="m-ico">💾</span> Guardar Guía
+      </button>
+      <button class="menu-item" onclick="abrirModal();cerrarMenu()">
+        <span class="m-ico">🔐</span> Autorizar
+      </button>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-label">Compartir</div>
+      <button class="menu-item" onclick="compartirWhatsApp('guia');cerrarMenu()">
+        <span class="m-ico">💬</span> Enviar por WhatsApp
+      </button>
+      <button class="menu-item" onclick="enviarEmail('guia');cerrarMenu()">
+        <span class="m-ico">✉️</span> Enviar por Email
+      </button>
+      <button class="menu-item" onclick="guardarPDF('guia');cerrarMenu()">
+        <span class="m-ico">📄</span> Descargar PDF
+      </button>
+      <button class="menu-item" onclick="abrirModalBT('guia');cerrarMenu()">
+        <span class="m-ico">🖨️</span> Imprimir Ticket
+      </button>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-label">Gestión</div>
+      <button class="menu-item" onclick="abrirHistorial();cerrarMenu()">
+        <span class="m-ico">📋</span> Historial de Guías
+      </button>
+      <button class="menu-item" onclick="abrirGestorClientes();cerrarMenu()">
+        <span class="m-ico">👥</span> Gestión de Clientes
+      </button>
+      <button class="menu-item" onclick="abrirModalExcel();cerrarMenu()">
+        <span class="m-ico">📊</span> Importar desde Excel
+      </button>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-label">Resetear</div>
+      <button class="menu-item danger" onclick="nuevaGuia();cerrarMenu()">
+        <span class="m-ico">🆕</span> Nueva Guía
+      </button>
+      <button class="menu-item danger" onclick="limpiarProductos();cerrarMenu()">
+        <span class="m-ico">🗑️</span> Limpiar Productos
+      </button>
+    </div>
+  </div>
+
+  <!-- Panel Traspaso -->
+  <div class="menu-panel" id="mPanelTraspaso">
+    <div class="menu-section">
+      <div class="menu-section-label">Documento</div>
+      <button class="menu-item tab-active" id="mTabTraspaso" onclick="cambiarTab('traspaso');cerrarMenu()">
+        <span class="m-ico">🔄</span> Traspaso entre Rutas
+      </button>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-label">Acciones</div>
+      <button class="menu-item" onclick="tGuardar();cerrarMenu()">
+        <span class="m-ico">💾</span> Guardar Traspaso
+      </button>
+      <button class="menu-item" onclick="tAutorizar();cerrarMenu()">
+        <span class="m-ico">🔐</span> Autorizar
+      </button>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-label">Compartir</div>
+      <button class="menu-item" onclick="compartirWhatsApp('traspaso');cerrarMenu()">
+        <span class="m-ico">💬</span> Enviar por WhatsApp
+      </button>
+      <button class="menu-item" onclick="enviarEmail('traspaso');cerrarMenu()">
+        <span class="m-ico">✉️</span> Enviar por Email
+      </button>
+      <button class="menu-item" onclick="guardarPDF('traspaso');cerrarMenu()">
+        <span class="m-ico">📄</span> Descargar PDF
+      </button>
+      <button class="menu-item" onclick="abrirModalBT('traspaso');cerrarMenu()">
+        <span class="m-ico">🖨️</span> Imprimir Ticket
+      </button>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-label">Gestión</div>
+      <button class="menu-item" onclick="abrirHistorialTraspaso();cerrarMenu()">
+        <span class="m-ico">📋</span> Historial de Traspasos
+      </button>
+      <button class="menu-item" onclick="abrirModalGestores();cerrarMenu()">
+        <span class="m-ico">👤</span> Gestores / Rutas
+      </button>
+      <button class="menu-item" onclick="abrirModalExcelTraspaso();cerrarMenu()">
+        <span class="m-ico">📊</span> Importar desde Excel
+      </button>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-label">Resetear</div>
+      <button class="menu-item danger" onclick="tNuevo();cerrarMenu()">
+        <span class="m-ico">🆕</span> Nuevo Traspaso
+      </button>
+      <button class="menu-item danger" onclick="tLimpiarProductos();cerrarMenu()">
+        <span class="m-ico">🗑️</span> Limpiar Productos
+      </button>
+    </div>
+  </div>
+
+  <!-- Panel Alerta -->
+  <div class="menu-panel" id="mPanelAler">
+    <div class="menu-section">
+      <div class="menu-section-label">Documento</div>
+      <button class="menu-item tab-active" id="mTabAlerta" onclick="cambiarTab('alerta');cerrarMenu()">
+        <span class="m-ico">⚠️</span> Alerta Vencimientos
+      </button>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-label">Compartir</div>
+      <button class="menu-item" onclick="compartirWhatsApp('alerta');cerrarMenu()">
+        <span class="m-ico">💬</span> Enviar por WhatsApp
+      </button>
+    </div>
+  </div>
+
+  <!-- Panel Sistema -->
+  <div class="menu-panel" id="mPanelSis">
+    <div class="menu-section">
+      <div class="menu-section-label">Impresora</div>
+      <button class="menu-item" onclick="abrirModalBT('guia');cerrarMenu()">
+        <span class="m-ico">🖨️</span> Configurar Bluetooth
+      </button>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-label">Datos</div>
+      <button class="menu-item" onclick="exportarHistorialExcel();cerrarMenu()">
+        <span class="m-ico">📊</span> Exportar Historial Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="menu-footer">
+    ICB Marco Polo · Sistema de Despacho<br>
+    <span style="font-size:10px;">Punta Arenas, Chile</span>
+  </div>
+</div>
+
+<!-- ===== BOTTOM NAV ===== -->
+<div class="bottom-nav" id="bottomNav">
+  <button class="bottom-nav-item active" id="bnGuia" onclick="cambiarTab('guia')">
+    <span class="bn-ico">📄</span>Guía
+  </button>
+  <button class="bottom-nav-item" id="bnTraspaso" onclick="cambiarTab('traspaso')">
+    <span class="bn-ico">🔄</span>Traspaso
+  </button>
+  <button class="bottom-nav-item" id="bnAlerta" onclick="cambiarTab('alerta')">
+    <span class="bn-ico">⚠️</span>Alerta
+  </button>
+  <button class="bottom-nav-item" id="bnMenu" onclick="abrirMenu()">
+    <span class="bn-ico">☰</span>Menú
+  </button>
+</div>
+
+<!-- ===== FAB ===== -->
+<div id="fabMenu">
+  <button id="fabMain" onclick="toggleFab()" aria-label="Acciones rápidas">＋</button>
+  <div id="fabActions">
+    <div class="fab-item">
+      <span class="fab-item-label" id="fabLblPrint">Imprimir</span>
+      <button class="fab-item-btn" style="background:#1a3a5c;" onclick="fabAccion('print')">🖨️</button>
+    </div>
+    <div class="fab-item">
+      <span class="fab-item-label" id="fabLblWa">WhatsApp</span>
+      <button class="fab-item-btn" style="background:#25d366;" onclick="fabAccion('wa')">💬</button>
+    </div>
+    <div class="fab-item">
+      <span class="fab-item-label" id="fabLblPdf">PDF</span>
+      <button class="fab-item-btn" style="background:#dc2626;" onclick="fabAccion('pdf')">📄</button>
+    </div>
+    <div class="fab-item">
+      <span class="fab-item-label" id="fabLblSave">Guardar</span>
+      <button class="fab-item-btn" style="background:#16a34a;" onclick="fabAccion('save')">💾</button>
+    </div>
+  </div>
+</div>
+
 <!-- DATOS CLIENTE SOLO IMPRESIÓN -->
   <div class="datos-cliente-print" id="printDatosCliente"></div>
 
@@ -1548,12 +2084,12 @@ tbody td input[readonly] { color: #475569; cursor: default; }
   <!-- generada dentro de printFooter -->
 
   <div class="app-header">
-    <div>
-      <div class="logo">ICB.CL</div>
-      <div class="guia-num" id="lblNumGuia">Guía N° —</div>
+    <button class="btn-menu" onclick="abrirMenu()" aria-label="Menú">☰</button>
+    <div style="flex:1;padding-left:12px;min-width:0;">
+      <div class="titulo" id="tituloHeader" style="font-size:16px;font-weight:800;">Guía de Despacho</div>
+      <div class="guia-num" id="lblNumGuia" style="font-size:11px;opacity:0.7;margin-top:1px;">N° —</div>
     </div>
-    <div class="titulo" id="tituloHeader">Guía de Despacho</div>
-    <div id="badgeEstado"><span class="badge badge-borrador">Borrador</span></div>
+    <div id="badgeEstado" style="flex-shrink:0;"><span class="badge badge-borrador">Borrador</span></div>
   </div>
   <div class="tabs-nav">
     <button class="tab-btn activa" id="tabGuia" onclick="cambiarTab('guia')">📄 Guía de Despacho</button>
@@ -1711,7 +2247,29 @@ tbody td input[readonly] { color: #475569; cursor: default; }
                   <div id="comboDropProducto" class="combo-drop"></div>
                 </div>
               </td>
-              <td></td>
+              <td class="no-imprimir" style="padding:4px 6px;">
+                <button onclick="gAbrirManual()" title="Agregar producto manual"
+                  style="width:36px;height:36px;border-radius:50%;border:none;background:#2563a8;color:white;font-size:20px;font-weight:700;cursor:pointer;line-height:1;">+</button>
+              </td>
+            </tr>
+            <!-- Modal agregar manual Guía -->
+            <tr id="trManualG" style="display:none;">
+              <td colspan="7" style="padding:8px 6px;">
+                <div style="background:#f1f5f9;border-radius:10px;padding:10px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                  <input id="gManualSku" type="text" placeholder="SKU (opcional)" maxlength="20"
+                    style="width:110px;padding:7px 9px;border:1.5px solid #cbd5e1;border-radius:7px;font-size:13px;font-family:var(--fuente);">
+                  <input id="gManualNombre" type="text" placeholder="Nombre del producto *"
+                    style="flex:1;min-width:140px;padding:7px 9px;border:1.5px solid #cbd5e1;border-radius:7px;font-size:13px;font-family:var(--fuente);">
+                  <input id="gManualCantidad" type="number" placeholder="Cant." min="1"
+                    style="width:70px;padding:7px 9px;border:1.5px solid #fbbf24;border-radius:7px;font-size:13px;font-family:var(--fuente);text-align:right;">
+                  <input id="gManualPrecio" type="number" placeholder="Precio" min="0"
+                    style="width:90px;padding:7px 9px;border:1.5px solid #cbd5e1;border-radius:7px;font-size:13px;font-family:var(--fuente);text-align:right;">
+                  <button onclick="gConfirmarManual()"
+                    style="padding:7px 16px;background:#16a34a;color:white;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;">✓ Agregar</button>
+                  <button onclick="gCerrarManual()"
+                    style="padding:7px 12px;background:#e2e8f0;color:#475569;border:none;border-radius:7px;font-size:13px;cursor:pointer;">✕</button>
+                </div>
+              </td>
             </tr>
             <tr class="fila-total" id="filaTotales">
               <td class="td-num"></td>
@@ -1789,6 +2347,7 @@ tbody td input[readonly] { color: #475569; cursor: default; }
     <button class="btn btn-naranja" onclick="abrirModal()">🔐 Autorizar</button>
     <button class="btn btn-sm" onclick="compartirWhatsApp('guia')" style="background:#25d366;color:white;">💬 WA</button>
     <button class="btn btn-sm" onclick="guardarPDF('guia')" style="background:#e53e3e;color:white;">📄 PDF</button>
+    <button class="btn btn-sm" onclick="enviarEmail('guia')" style="background:#0ea5e9;color:white;">✉️ Email</button>
     <button class="btn btn-verde" onclick="abrirModalBT('guia')">🖨 Imprimir</button>
   </div>
 
@@ -1957,7 +2516,27 @@ tbody td input[readonly] { color: #475569; cursor: default; }
                   <div id="comboDropTProducto" class="combo-drop"></div>
                 </div>
               </td>
-              <td></td>
+              <td class="no-imprimir" style="padding:4px 6px;">
+                <button onclick="tAbrirManual()" title="Agregar producto manual"
+                  style="width:36px;height:36px;border-radius:50%;border:none;background:#2563a8;color:white;font-size:20px;font-weight:700;cursor:pointer;line-height:1;">+</button>
+              </td>
+            </tr>
+            <!-- Modal agregar manual -->
+            <tr id="trManualT" style="display:none;">
+              <td colspan="5" style="padding:8px 6px;">
+                <div style="background:#f1f5f9;border-radius:10px;padding:10px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                  <input id="tManualSku" type="text" placeholder="SKU (opcional)" maxlength="20"
+                    style="width:110px;padding:7px 9px;border:1.5px solid #cbd5e1;border-radius:7px;font-size:13px;font-family:var(--fuente);">
+                  <input id="tManualNombre" type="text" placeholder="Nombre del producto *"
+                    style="flex:1;min-width:140px;padding:7px 9px;border:1.5px solid #cbd5e1;border-radius:7px;font-size:13px;font-family:var(--fuente);">
+                  <input id="tManualCantidad" type="number" placeholder="Cant." min="1"
+                    style="width:70px;padding:7px 9px;border:1.5px solid #fbbf24;border-radius:7px;font-size:13px;font-family:var(--fuente);text-align:right;">
+                  <button onclick="tConfirmarManual()"
+                    style="padding:7px 16px;background:#16a34a;color:white;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;">✓ Agregar</button>
+                  <button onclick="tCerrarManual()"
+                    style="padding:7px 12px;background:#e2e8f0;color:#475569;border:none;border-radius:7px;font-size:13px;cursor:pointer;">✕</button>
+                </div>
+              </td>
             </tr>
             <tr class="fila-total">
               <td class="td-num"></td>
@@ -2025,6 +2604,7 @@ tbody td input[readonly] { color: #475569; cursor: default; }
     <button class="btn btn-naranja" onclick="tAutorizar()">🔐 Autorizar</button>
     <button class="btn btn-sm" onclick="compartirWhatsApp('traspaso')" style="background:#25d366;color:white;">💬 WA</button>
     <button class="btn btn-sm" onclick="guardarPDF('traspaso')" style="background:#e53e3e;color:white;">📄 PDF</button>
+    <button class="btn btn-sm" onclick="enviarEmail('traspaso')" style="background:#0ea5e9;color:white;">✉️ Email</button>
     <button class="btn btn-verde" onclick="abrirModalBT('traspaso')">🖨 Imprimir</button>
   </div>
 </div><!-- /pantallaTraspaso -->
@@ -2503,6 +3083,100 @@ function hoyISO() {
 /* =========================================================
    INICIALIZAR
    ========================================================= */
+
+// ── MENÚ LATERAL ──
+function abrirMenu() {
+  const tab = _tabActual || 'guia';
+  switchMenuPanel(tab);
+  document.getElementById('menuDrawer').classList.add('open');
+  document.getElementById('menuOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function cerrarMenu() {
+  document.getElementById('menuDrawer').classList.remove('open');
+  document.getElementById('menuOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Paneles internos del drawer
+function switchMenuPanel(panel) {
+  const panels = ['guia','traspaso','alerta','sistema'];
+  const tabIds = {guia:'mPanelGuiaTab', traspaso:'mPanelTraspasoTab', alerta:'mPanelAlerTab', sistema:'mPanelSisTab'};
+  const panelIds = {guia:'mPanelGuia', traspaso:'mPanelTraspaso', alerta:'mPanelAler', sistema:'mPanelSis'};
+  panels.forEach(p => {
+    const t = document.getElementById(tabIds[p]);
+    const v = document.getElementById(panelIds[p]);
+    if (t) t.classList.toggle('active', p === panel);
+    if (v) v.classList.toggle('active', p === panel);
+  });
+}
+
+// Sincronizar bottom-nav y menú con la tab activa
+var _tabActual = 'guia';
+function _menuSyncTab(tab) {
+  _tabActual = tab;
+  // Bottom nav
+  const bnMap = {guia:'bnGuia', traspaso:'bnTraspaso', alerta:'bnAlerta'};
+  ['bnGuia','bnTraspaso','bnAlerta','bnMenu'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  const bnEl = document.getElementById(bnMap[tab]);
+  if (bnEl) bnEl.classList.add('active');
+  // FAB labels
+  const labelsMap = {
+    guia:     {save:'Guardar Guía',    wa:'Guía WA',    pdf:'PDF Guía',    print:'Impr. Guía'},
+    traspaso: {save:'Guardar Trasp.',  wa:'Traspaso WA',pdf:'PDF Trasp.',  print:'Impr. Trasp.'},
+    alerta:   {save:'',               wa:'Alerta WA',  pdf:'',            print:''}
+  };
+  const lb = labelsMap[tab] || labelsMap.guia;
+  ['Save','Wa','Pdf','Print'].forEach(k => {
+    const el = document.getElementById('fabLbl'+k);
+    if (el) el.textContent = lb[k.toLowerCase()];
+  });
+  // Header título
+  const titulos = {guia:'Guía de Despacho', traspaso:'Traspaso', alerta:'Alerta Vencimientos'};
+  const hdr = document.getElementById('tituloHeader');
+  if (hdr) hdr.textContent = titulos[tab] || '';
+}
+
+// FAB
+var _fabOpen = false;
+function toggleFab() {
+  _fabOpen = !_fabOpen;
+  document.getElementById('fabMain').classList.toggle('open', _fabOpen);
+  document.getElementById('fabActions').classList.toggle('open', _fabOpen);
+}
+function fabAccion(accion) {
+  toggleFab();
+  const tab = _tabActual;
+  if (accion === 'save')  { tab === 'traspaso' ? tGuardar() : guardarGuia(); }
+  if (accion === 'wa')    { compartirWhatsApp(tab); }
+  if (accion === 'pdf')   { tab !== 'alerta' && guardarPDF(tab); }
+  if (accion === 'print') { tab !== 'alerta' && abrirModalBT(tab); }
+}
+// Cerrar FAB al tocar fuera
+document.addEventListener('click', function(e) {
+  if (_fabOpen && !document.getElementById('fabMenu').contains(e.target)) toggleFab();
+}, {capture: true});
+
+// Swipe para abrir/cerrar menú
+(function(){
+  var sx = 0, sy = 0;
+  document.addEventListener('touchstart', function(e){
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+  }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    var dx = e.changedTouches[0].clientX - sx;
+    var dy = Math.abs(e.changedTouches[0].clientY - sy);
+    if (dy > 60) return; // scroll vertical, ignorar
+    var drawer = document.getElementById('menuDrawer');
+    if (dx > 60 && sx < 30 && !drawer.classList.contains('open')) abrirMenu();
+    if (dx < -60 && drawer.classList.contains('open')) cerrarMenu();
+  }, {passive:true});
+})();
+
 window.addEventListener('DOMContentLoaded', () => {
   try {
     document.getElementById('numGuia').value = numGuiaActual;
@@ -3115,51 +3789,52 @@ function _waTextoGuia() {
   const totM     = filas.reduce((s,f) => s+(Number(f.cantidad)||0)*(Number(f.precio)||0), 0);
 
   let msg = '';
-  msg += `📦 *GUIA DE DESPACHO N° ${num}*\n`;
-  msg += `📅 ${fecha}  🕐 ${_waHora()}\n`;
+
+  // ── EMISOR ──
+  msg += `*GUIA DE DESPACHO N° ${num}*\n`;
+  msg += `Fecha: ${fecha}   Hora: ${_waHora()}\n`;
+  msg += `\n`;
+  msg += `*EMISOR*\n`;
+  msg += `ICB MARCO POLO - ICB.CL\n`;
+  msg += `Punta Arenas, Chile\n`;
+  if (tipo)     msg += `Tipo: ${tipo}\n`;
+  if (gestor)   msg += `Vendedor: ${gestor}\n`;
+  if (bodega)   msg += `Bodega: ${bodega}\n`;
+  if (condPago) msg += `Condicion Pago: ${condPago}\n`;
+  if (chofer)   msg += `Chofer: ${chofer}${vehiculo?' | Patente: '+vehiculo:''}\n`;
+  msg += `- - - - - - - - - - - - - - - - -\n`;
   msg += `\n`;
 
-  // Emisor
-  msg += `🏢 *ICB MARCO POLO — ICB.CL*\n`;
-  msg += `📍 Punta Arenas, Chile\n`;
-  const linEmisor = [
-    tipo     ? `Tipo: ${tipo}` : '',
-    gestor   ? `Vendedor: ${gestor}` : '',
-    chofer   ? `Chofer: ${chofer}` : '',
-    vehiculo ? `Patente: ${vehiculo}` : '',
-    bodega   ? `Bodega: ${bodega}` : '',
-    condPago ? `Pago: ${condPago}` : ''
-  ].filter(Boolean);
-  if (linEmisor.length) msg += linEmisor.join('  |  ') + '\n';
+  // ── CLIENTE ──
+  msg += `*CLIENTE*\n`;
+  msg += `${cNombre}\n`;
+  if (cCodigo) msg += `Codigo: ${cCodigo}\n`;
+  if (cRut)    msg += `RUT: ${cRut}\n`;
+  if (cDir)    msg += `Direccion: ${cDir}${cCiudad?', '+cCiudad:''}\n`;
+  if (cCiudad) msg += `Ciudad: ${cCiudad}\n`;
+  if (cTel)    msg += `Telefono: ${cTel}\n`;
+  msg += `- - - - - - - - - - - - - - - - -\n`;
   msg += `\n`;
 
-  // Cliente
-  msg += `👤 *${cNombre}*\n`;
-  const linCliente = [
-    cCodigo ? `Cód: ${cCodigo}` : '',
-    cRut    ? `RUT: ${cRut}` : '',
-    cDir    ? cDir : '',
-    cCiudad ? cCiudad : '',
-    cTel    ? `Tel: ${cTel}` : ''
-  ].filter(Boolean);
-  if (linCliente.length) msg += linCliente.join('  |  ') + '\n';
+  // ── PRODUCTOS ──
+  msg += `*DETALLE DE PRODUCTOS*\n`;
   msg += `\n`;
-
-  // Productos
-  msg += `🛒 *PRODUCTOS (${filas.length} ítem${filas.length !== 1 ? 's' : ''})*\n`;
   filas.forEach((f, i) => {
     const tot    = (Number(f.cantidad)||0) * (Number(f.precio)||0);
     const estado = f.estado || 'PENDIENTE';
-    msg += `${i+1}. ${String(f.nombre).toUpperCase()}\n`;
-    msg += `   SKU ${f.sku}  |  ${f.cantidad} u × ${_waFmt(f.precio)} = *${_waFmt(tot)}*  |  ${estado}\n`;
+    const stt    = estado === 'ENTREGADO' ? '✅ Entregado' : '⏳ Pendiente';
+    msg += `*${i+1}. ${String(f.nombre).toUpperCase()}*\n`;
+    msg += `SKU: ${f.sku}\n`;
+    msg += `${f.cantidad} und x ${_waFmt(f.precio)} = *${_waFmt(tot)}*\n`;
+    msg += `Estado: ${stt}\n`;
+    msg += `\n`;
   });
-  msg += `\n`;
-
-  // Totales
-  msg += `📊 Unidades: ${totU}  |  Ítems: ${filas.length}\n`;
-  msg += `💰 *TOTAL: ${_waFmt(totM)}*\n`;
-
-  if (obs) msg += `\n📝 ${obs}\n`;
+  msg += `- - - - - - - - - - - - - - - - -\n`;
+  msg += `Total Unidades: ${totU}\n`;
+  msg += `*TOTAL: ${_waFmt(totM)}*\n`;
+  msg += `- - - - - - - - - - - - - - - - -\n`;
+  if (obs) msg += `\nObservaciones: ${obs}\n`;
+  msg += `\n_ICB MARCO POLO - ICB.CL_`;
 
   return msg;
 }
@@ -3176,48 +3851,86 @@ function _waTextoTraspaso() {
   const motivo= document.getElementById('tMotivo')?.value || '';
   const obs   = document.getElementById('tObservaciones').value.trim();
   const totU  = tFilas.reduce((s,f) => s+(Number(f.cantidad)||0), 0);
-  const SEP   = '----------------------------------------';
-  const SEP2  = '========================================';
-
   let msg = '';
-  msg += `ICB MARCO POLO\n`;
-  msg += `DOCUMENTO DE TRASPASO N° ${num}\n`;
-  msg += `Fecha: ${fecha}   Hora: ${_waHora()}\n`;
-  msg += `${SEP}\n`;
 
-  msg += `ORIGEN\n`;
-  msg += `${gO ? `Ruta ${gO.rutaDesde}` : '—'}\n`;
-  if (gO) msg += `${gO.nombre}\n`;
+  // ── ENCABEZADO ──
+  msg += `*TRASPASO N° ${num}*\n`;
+  msg += `Fecha: ${fecha}   Hora: ${_waHora()}\n`;
+  if (motivo) msg += `Motivo: ${motivo}\n`;
+  msg += `\n`;
+
+  // ── ORIGEN ──
+  msg += `*ORIGEN*\n`;
+  msg += `Ruta: ${gO ? gO.rutaDesde : '—'}\n`;
+  if (gO) msg += `Gestor: ${gO.nombre}\n`;
   if (gO && gO.rut) msg += `RUT: ${gO.rut}\n`;
   msg += `\n`;
-  msg += `DESTINO\n`;
-  msg += `${gD ? `Ruta ${gD.rutaHasta}` : '—'}\n`;
-  if (gD) msg += `${gD.nombre}\n`;
-  if (gD && gD.rut) msg += `RUT: ${gD.rut}\n`;
-  if (motivo) { msg += `\nMotivo: ${motivo}\n`; }
-  msg += `${SEP}\n`;
 
-  msg += `DETALLE DE PRODUCTOS\n\n`;
+  // ── DESTINO ──
+  msg += `*DESTINO*\n`;
+  msg += `Ruta: ${gD ? gD.rutaHasta : '—'}\n`;
+  if (gD) msg += `Gestor: ${gD.nombre}\n`;
+  if (gD && gD.rut) msg += `RUT: ${gD.rut}\n`;
+  msg += `- - - - - - - - - - - - - - - - -\n`;
+  msg += `\n`;
+
+  // ── PRODUCTOS ──
+  msg += `*DETALLE DE PRODUCTOS*\n`;
+  msg += `\n`;
   tFilas.forEach((f, i) => {
     const estado = f.estado || 'PENDIENTE';
-    msg += `${i+1}. SKU ${f.sku}\n`;
-    msg += `   ${String(f.nombre).toUpperCase()}\n`;
-    msg += `   Cantidad: ${f.cantidad} und.\n`;
-    msg += `   Estado: ${estado}\n`;
-    if (i < tFilas.length - 1) msg += `\n`;
+    const stt    = estado === 'ENTREGADO' ? '✅ Entregado' : '⏳ Pendiente';
+    msg += `*${i+1}. ${String(f.nombre).toUpperCase()}*\n`;
+    msg += `SKU: ${f.sku}\n`;
+    msg += `Cantidad: ${f.cantidad} und.\n`;
+    msg += `Estado: ${stt}\n`;
+    msg += `\n`;
   });
-  msg += `${SEP}\n`;
-
-  msg += `Productos: ${tFilas.length}\n`;
-  msg += `${SEP2}\n`;
-  msg += `TOTAL UNIDADES   ${totU}\n`;
-  msg += `${SEP2}\n`;
-
-  if (obs) {
-    msg += `\nObservaciones:\n${obs}\n`;
-  }
-  msg += `\nICB MARCO POLO — ICB.CL\nPunta Arenas, Chile`;
+  msg += `- - - - - - - - - - - - - - - - -\n`;
+  msg += `*TOTAL UNIDADES: ${totU}*\n`;
+  msg += `- - - - - - - - - - - - - - - - -\n`;
+  if (obs) msg += `\nObservaciones: ${obs}\n`;
+  msg += `\n_ICB MARCO POLO - ICB.CL_`;
   return msg;
+}
+
+// ── EMAIL ──
+function enviarEmail(tipo) {
+  let texto = '';
+  let asunto = '';
+  let destinatario = '';
+
+  if (tipo === 'guia') {
+    texto = _waTextoGuia();
+    const num  = document.getElementById('numGuia')?.value || '';
+    const cNombre = document.getElementById('comboCliente')?.value || '';
+    const cEmail  = document.getElementById('clienteEmail')?.value || '';
+    asunto = `Guía de Despacho N° ${num} — ICB Marco Polo`;
+    destinatario = cEmail || '';
+  } else if (tipo === 'traspaso') {
+    texto = _waTextoTraspaso();
+    const num = document.getElementById('tNumero')?.value || '';
+    asunto = `Traspaso N° ${num} — ICB Marco Polo`;
+  }
+
+  if (!texto) return;
+
+  // Limpiar emojis y formato markdown para email
+  const cuerpo = texto
+    .replace(/[🏢📄📅🕐📋💳🏬🧑🚗👤📍📞🛒📦💰🔄✅📝🔔⚠️💬▬━]/gu, '')
+    .replace(/\*/g, '')
+    .replace(/_/g, '')
+    .trim();
+
+  const mailto = `mailto:${encodeURIComponent(destinatario)}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+
+  // Abrir cliente de correo
+  window.location.href = mailto;
+
+  // Aviso para descargar PDF adjunto
+  setTimeout(() => {
+    mostrarToast('📎 Descarga el PDF para adjuntarlo al correo', '#0ea5e9');
+  }, 800);
 }
 
 function _waTextoAlerta() {
@@ -3230,19 +3943,19 @@ function _waTextoAlerta() {
   });
   const fuera = todos.filter(f => f.st.ok === false);
   const ok    = todos.filter(f => f.st.ok !== false);
-  const SEP   = '----------------------------------------';
-  const SEP2  = '========================================';
+  const ASEP  = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+  const ASEP2 = '▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬';
 
   let msg = '';
   msg += `ICB MARCO POLO\n`;
   msg += `REPORTE ALERTA VENCIMIENTOS\n`;
   msg += `Fecha: ${hoy}   Hora: ${_waHora()}\n`;
   msg += `Umbral minimo: ${ALERTA_UMBRAL}%\n`;
-  msg += `${SEP}\n`;
+  msg += `${ASEP}\n`;
   msg += `Total productos: ${todos.length}\n`;
   msg += `En alerta:       ${fuera.length}\n`;
   msg += `OK:              ${ok.length}\n`;
-  msg += `${SEP}\n`;
+  msg += `${ASEP}\n`;
 
   if (!fuera.length) {
     msg += `\nTodos los productos dentro del umbral (${ALERTA_UMBRAL}%)\n`;
@@ -3256,13 +3969,13 @@ function _waTextoAlerta() {
       msg += `   Vida restante: ${f.pct === null ? '—' : f.pct + '%'}  ALERTA\n`;
       if (i < fuera.length - 1) msg += `\n`;
     });
-    msg += `${SEP}\n`;
+    msg += `${ASEP}\n`;
     msg += `Accion: retirar o priorizar rotacion inmediata.\n`;
   }
 
-  msg += `${SEP2}\n`;
+  msg += `${ASEP2}\n`;
   msg += `TOTAL ALERTA   ${fuera.length} de ${todos.length}\n`;
-  msg += `${SEP2}\n`;
+  msg += `${ASEP2}\n`;
   msg += `\nICB MARCO POLO — ICB.CL\nPunta Arenas, Chile`;
   return msg;
 }
@@ -4581,6 +5294,7 @@ function limpiarProductos() {
    SISTEMA DE PESTAÑAS
    ========================================================= */
 function cambiarTab(tab) {
+  if (typeof _menuSyncTab === 'function') _menuSyncTab(tab);
   const esGuia = tab === 'guia';
   const esTras = tab === 'traspaso';
   const esAlerta = tab === 'alerta';
@@ -4825,6 +5539,70 @@ function tRenderTabla() {
 function tEliminarFila(i) {
   tFilas.splice(i, 1);
   tRenderTabla();
+}
+
+// ── AGREGAR MANUAL TRASPASO ──
+function tAbrirManual() {
+  const tr = document.getElementById('trManualT');
+  tr.style.display = tr.style.display === 'none' ? '' : 'none';
+  if (tr.style.display !== 'none') {
+    document.getElementById('tManualNombre').focus();
+  }
+}
+function tCerrarManual() {
+  document.getElementById('trManualT').style.display = 'none';
+  document.getElementById('tManualSku').value = '';
+  document.getElementById('tManualNombre').value = '';
+  document.getElementById('tManualCantidad').value = '';
+}
+function tConfirmarManual() {
+  const sku     = document.getElementById('tManualSku').value.trim() || ('MAN-' + Date.now());
+  const nombre  = document.getElementById('tManualNombre').value.trim();
+  const cantidad= parseInt(document.getElementById('tManualCantidad').value) || 1;
+  if (!nombre) { mostrarToast('⚠️ Ingresa un nombre', '#ea580c'); return; }
+  const existente = tFilas.find(f => f.sku === sku);
+  if (existente) {
+    existente.cantidad = (existente.cantidad || 0) + cantidad;
+    mostrarToast(`+${cantidad} → ${nombre}`, '#2563a8');
+  } else {
+    tFilas.push({ sku, nombre, cantidad });
+    mostrarToast(`✓ ${nombre}`, '#16a34a');
+  }
+  tRenderTabla();
+  tCerrarManual();
+}
+
+// ── AGREGAR MANUAL GUÍA DE DESPACHO ──
+function gAbrirManual() {
+  const tr = document.getElementById('trManualG');
+  tr.style.display = tr.style.display === 'none' ? '' : 'none';
+  if (tr.style.display !== 'none') {
+    document.getElementById('gManualNombre').focus();
+  }
+}
+function gCerrarManual() {
+  document.getElementById('trManualG').style.display = 'none';
+  document.getElementById('gManualSku').value = '';
+  document.getElementById('gManualNombre').value = '';
+  document.getElementById('gManualCantidad').value = '';
+  document.getElementById('gManualPrecio').value = '';
+}
+function gConfirmarManual() {
+  const sku     = document.getElementById('gManualSku').value.trim() || ('MAN-' + Date.now());
+  const nombre  = document.getElementById('gManualNombre').value.trim();
+  const cantidad= parseInt(document.getElementById('gManualCantidad').value) || 1;
+  const precio  = parseInt(document.getElementById('gManualPrecio').value) || 0;
+  if (!nombre) { mostrarToast('⚠️ Ingresa un nombre', '#ea580c'); return; }
+  const existente = filas.find(f => f.sku === sku);
+  if (existente) {
+    existente.cantidad = (existente.cantidad || 0) + cantidad;
+    mostrarToast(`+${cantidad} → ${nombre}`, '#2563a8');
+  } else {
+    filas.push({ sku, nombre, cantidad, precio });
+    mostrarToast(`✓ ${nombre}`, '#16a34a');
+  }
+  renderTabla();
+  gCerrarManual();
 }
 
 function tActualizarTotales() {
@@ -6313,13 +7091,32 @@ function generarCPCL_Traspaso(ancho) {
   const line = (yy) => lines.push(`LINE 0 ${yy} ${W} ${yy} 2`);
   const dash = (yy) => lines.push(`LINE 0 ${yy} ${W} ${yy} 1`);
 
-  lines.push(`! 0 200 200 ${LH * (tFilas.length + 20)} 1`);
+  lines.push('__HEADER_PLACEHOLDER__');
 
-  add('ICB. MARCO POLO', Math.floor(W/2)-80, y, '4', 1); y+=LH+4;
-  add('TRASPASO ENTRE RUTAS', Math.floor(W/2)-80, y, '4', 1); y+=LH;
-  add(`N: ${num}`, 0, y, '4', 0);
-  add(`Fecha: ${fecha}`, Math.floor(W/2), y, '4', 0); y+=LH;
-  add(`Motivo: ${truncar(motivo,22)}`, 0, y, '4', 0); y+=LH;
+  // ── ENCABEZADO EN RECTÁNGULO ──
+  const ML2 = 10, MT2 = 10;
+  const bH = 44 + 26 + 44 + 26 + 10;
+  const bY2 = MT2 - 6 + bH;
+  lines.push(`BOX ${ML2} ${MT2-6} ${W-ML2} ${bY2} 2`);
+  lines.push('CENTER');
+  lines.push('SETBOLD 1');
+  lines.push('SETMAG 2 2');
+  add('ICB.MARCO POLO', 0, MT2, '4', 1); y = MT2 + 44;
+  lines.push('SETMAG 1 1');
+  lines.push('SETBOLD 0');
+  add('TRASPASO', 0, y, '4', 0); y += 26;
+  lines.push('SETBOLD 1');
+  lines.push('SETMAG 2 2');
+  add('N ' + num, 0, y, '4', 1); y += 44;
+  lines.push('SETMAG 1 1');
+  lines.push('SETBOLD 0');
+  add('(DOCUMENTO INTERNO)', 0, y, '4', 0);
+  y = bY2 + 14;
+  lines.push('LEFT');
+  line(y); y += 14;
+
+  add(`Fecha: ${fecha}`, 0, y, '4', 0);
+  add(`Motivo: ${truncar(motivo,22)}`, Math.floor(W/2), y, '4', 0); y+=LH;
   line(y); y+=6;
 
   add('ORIGEN', 0, y, '4', 0); y+=LH;
@@ -6356,6 +7153,9 @@ function generarCPCL_Traspaso(ancho) {
   add('ICB. MARCO POLO', 0, y, '4', 0);
 
   lines.push('PRINT');
+  const altReal2 = y + 30;
+  const idx2 = lines.indexOf('__HEADER_PLACEHOLDER__');
+  if(idx2 !== -1) lines[idx2] = `! 0 200 200 ${altReal2} 1`;
   return lines.join('\r\n') + '\r\n';
 }
 
@@ -6627,34 +7427,35 @@ function generarESCPOS_Traspaso(){
   const FB = 1;
   const PAGE_W = 576;
   const ML = 16, MT = 16, MB = 24;
-  const altTotal = Math.min((26 + tFilas.length * 3) * 30 + MT + MB, 3721);
   const L = [];
-  L.push('! 0 203 203 ' + altTotal + ' 1');
+  L.push('__HEADER_PLACEHOLDER__');
   L.push('PAGE-WIDTH ' + PAGE_W);
   L.push('SPEED 3');
   L.push('TONE 8');
 
+  // ── ENCABEZADO EN RECTÁNGULO (igual que Guía de Despacho) ──
+  const lineH = 26, boldH = 44;
+  const boxY1 = MT - 6;
+  const boxH  = boldH + lineH + boldH + lineH + 10;
+  const boxY2 = boxY1 + boxH;
+  L.push('BOX ' + ML + ' ' + boxY1 + ' ' + (PAGE_W - ML) + ' ' + boxY2 + ' 2');
   L.push('CENTER');
   L.push('SETBOLD 1');
   L.push('SETMAG 2 2');
   L.push('TEXT ' + FA + ' 0 0 ' + MT + ' ICB.MARCO POLO');
   L.push('SETMAG 1 1');
   L.push('SETBOLD 0');
-  let y = MT + 40;
-  L.push('LEFT');
-  L.push('LINE ' + ML + ' ' + y + ' ' + (PAGE_W - ML) + ' ' + y + ' 1');
-  y += 12;
-
-  L.push('CENTER');
+  let y = MT + boldH;
+  L.push('TEXT ' + FA + ' 0 0 ' + y + ' TRASPASO'); y += lineH;
   L.push('SETBOLD 1');
-  L.push('TEXT ' + FA + ' 0 0 ' + y + ' TRASPASO');
-  L.push('SETBOLD 0');
-  y += 36;
-  L.push('SETBOLD 1');
+  L.push('SETMAG 2 2');
   L.push('TEXT ' + FA + ' 0 0 ' + y + ' N ' + num);
+  L.push('SETMAG 1 1');
   L.push('SETBOLD 0');
+  y += boldH;
+  L.push('TEXT ' + FA + ' 0 0 ' + y + ' (DOCUMENTO INTERNO)');
+  y = boxY2 + 14;
   L.push('LEFT');
-  y += 28;
   L.push('LINE ' + ML + ' ' + y + ' ' + (PAGE_W - ML) + ' ' + y + ' 1');
   y += 14;
 
@@ -6739,6 +7540,9 @@ function generarESCPOS_Traspaso(){
 
   L.push('FORM');
   L.push('PRINT');
+  const altReal = y + MB;
+  const idx = L.indexOf('__HEADER_PLACEHOLDER__');
+  if(idx !== -1) L[idx] = '! 0 203 203 ' + altReal + ' 1';
   return _cpclEncode(L);
 }
 
