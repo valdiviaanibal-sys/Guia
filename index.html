@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <title>Guía de Despacho – ICB. MARCO POLO</title>
 <style>
 
@@ -1524,6 +1525,7 @@ tbody td input[readonly] { color: #475569; cursor: default; }
 
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 </head>
 <body>
 
@@ -1851,6 +1853,71 @@ tbody td input[readonly] { color: #475569; cursor: default; }
     <div class="print-sucursal">(NO VALIDO COMO BOLETA)</div>
 </div>
 
+<!-- ===== PANTALLA LOGIN ===== -->
+<div id="pantallaLogin" style="
+  position:fixed;inset:0;z-index:9999;
+  background:linear-gradient(160deg,#1a3a5c 0%,#2563a8 60%,#1e40af 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 24px;
+">
+  <div style="text-align:center;margin-bottom:36px;">
+    <div style="font-size:52px;margin-bottom:12px;">🏢</div>
+    <div style="font-size:24px;font-weight:900;color:white;letter-spacing:1px;">ICB MARCO POLO</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.65);margin-top:4px;">Sistema de Despacho · ICB.CL</div>
+  </div>
+
+  <div style="
+    background:white;border-radius:20px;padding:28px 24px;
+    width:100%;max-width:360px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.3);
+  ">
+    <div style="font-size:17px;font-weight:800;color:#1a3a5c;margin-bottom:4px;">Iniciar Sesión</div>
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:20px;">Ingresa tus credenciales de acceso</div>
+
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px;">EMAIL</label>
+      <input id="loginEmail" type="email" inputmode="email" autocomplete="email"
+        placeholder="gestor@icb.cl"
+        style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;
+               font-size:15px;font-family:inherit;box-sizing:border-box;outline:none;
+               -webkit-appearance:none;">
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px;">CONTRASEÑA</label>
+      <div style="position:relative;">
+        <input id="loginPass" type="password" autocomplete="current-password"
+          placeholder="••••••••"
+          style="width:100%;padding:12px 44px 12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;
+                 font-size:15px;font-family:inherit;box-sizing:border-box;outline:none;
+                 -webkit-appearance:none;"
+          onkeydown="if(event.key==='Enter')loginSubmit()">
+        <button onclick="toggleLoginPass()" style="
+          position:absolute;right:12px;top:50%;transform:translateY(-50%);
+          background:none;border:none;font-size:18px;cursor:pointer;color:#94a3b8;padding:4px;
+        " id="loginPassToggle">👁</button>
+      </div>
+    </div>
+
+    <div id="loginError" style="
+      display:none;background:#fef2f2;border:1px solid #fecaca;
+      border-radius:8px;padding:10px 12px;margin-bottom:14px;
+      font-size:13px;color:#dc2626;font-weight:600;
+    "></div>
+
+    <button onclick="loginSubmit()" id="loginBtn" style="
+      width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#2563a8);
+      color:white;border:none;border-radius:12px;font-size:16px;font-weight:800;
+      cursor:pointer;-webkit-tap-highlight-color:transparent;
+      box-shadow:0 4px 16px rgba(37,99,168,0.4);
+    ">Ingresar</button>
+
+    <div style="text-align:center;margin-top:16px;font-size:11px;color:#94a3b8;">
+      Punta Arenas, Chile · v3.27
+    </div>
+  </div>
+</div>
+
 <!-- ===== OVERLAY ===== -->
 <div id="menuOverlay" onclick="cerrarMenu()"></div>
 
@@ -2089,7 +2156,15 @@ tbody td input[readonly] { color: #475569; cursor: default; }
       <div class="titulo" id="tituloHeader" style="font-size:16px;font-weight:800;">Guía de Despacho</div>
       <div class="guia-num" id="lblNumGuia" style="font-size:11px;opacity:0.7;margin-top:1px;">N° —</div>
     </div>
-    <div id="badgeEstado" style="flex-shrink:0;"><span class="badge badge-borrador">Borrador</span></div>
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+      <div id="badgeEstado"><span class="badge badge-borrador">Borrador</span></div>
+      <button onclick="cerrarSesion()" title="Cerrar sesión" style="
+        background:rgba(255,255,255,0.15);border:none;color:white;
+        width:32px;height:32px;border-radius:50%;font-size:15px;
+        cursor:pointer;display:flex;align-items:center;justify-content:center;
+        -webkit-tap-highlight-color:transparent;flex-shrink:0;
+      ">⏏️</button>
+    </div>
   </div>
   <div class="tabs-nav">
     <button class="tab-btn activa" id="tabGuia" onclick="cambiarTab('guia')">📄 Guía de Despacho</button>
@@ -3177,7 +3252,161 @@ document.addEventListener('click', function(e) {
   }, {passive:true});
 })();
 
+
+// ════════════════════════════════════════
+// SUPABASE — ICB MARCO POLO
+// ════════════════════════════════════════
+const SUPA_URL = 'https://dhzsypogaskybgnzekvu.supabase.co';
+const SUPA_KEY = 'sb_publishable_adIKhOl9KzHk365UklBP2Q_StDFO__b';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let _sesionUsuario = null;
+let _perfilUsuario = null;
+let _suscripcion   = null;
+
+// ── AUTH ──
+async function iniciarApp() {
+  const { data: { session } } = await supa.auth.getSession();
+  if (session) {
+    _sesionUsuario = session;
+    await _cargarPerfil(session.user.id);
+    mostrarApp();
+  } else {
+    mostrarLogin();
+  }
+  supa.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      _sesionUsuario = session;
+      await _cargarPerfil(session.user.id);
+      mostrarApp();
+    } else if (event === 'SIGNED_OUT') {
+      _sesionUsuario = null;
+      _perfilUsuario = null;
+      mostrarLogin();
+    }
+  });
+}
+
+async function _cargarPerfil(uid) {
+  const { data } = await supa.from('gestores').select('*').eq('auth_id', uid).single();
+  if (data) {
+    _perfilUsuario = data;
+    // Autocompletar gestor en la guía
+    const gEl = document.getElementById('gestor');
+    if (gEl && !gEl.value) gEl.value = data.codigo + ' — ' + data.nombre;
+    // Mostrar nombre en drawer
+    const subEl = document.querySelector('.menu-header .m-sub');
+    if (subEl) subEl.textContent = data.nombre + ' · ' + data.codigo;
+  }
+}
+
+function mostrarLogin() {
+  document.getElementById('pantallaLogin').style.display = 'flex';
+  document.getElementById('pantallaPrincipal').style.display = 'none';
+  document.getElementById('pantallaTraspaso') && (document.getElementById('pantallaTraspaso').style.display='none');
+  document.getElementById('pantallaAlerta')   && (document.getElementById('pantallaAlerta').style.display='none');
+  document.getElementById('bottomNav').style.display = 'none';
+  document.getElementById('fabMenu').style.display = 'none';
+}
+
+function mostrarApp() {
+  document.getElementById('pantallaLogin').style.display = 'none';
+  document.getElementById('bottomNav').style.display = 'flex';
+  document.getElementById('fabMenu').style.display = 'flex';
+  cambiarTab('guia');
+  _suscribirCambios();
+  setTimeout(syncFromCloud, 800);
+}
+
+async function loginSubmit() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  const btn   = document.getElementById('loginBtn');
+  errEl.style.display = 'none';
+  if (!email || !pass) { errEl.textContent='Completa todos los campos'; errEl.style.display='block'; return; }
+  btn.textContent = 'Ingresando…'; btn.disabled = true;
+  const { error } = await supa.auth.signInWithPassword({ email, password: pass });
+  btn.textContent = 'Ingresar'; btn.disabled = false;
+  if (error) { errEl.textContent = 'Email o contraseña incorrectos'; errEl.style.display='block'; }
+}
+
+function toggleLoginPass() {
+  const inp = document.getElementById('loginPass');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+async function cerrarSesion() {
+  if (!confirm('¿Cerrar sesión?')) return;
+  if (_suscripcion) { supa.removeChannel(_suscripcion); _suscripcion = null; }
+  await supa.auth.signOut();
+}
+
+// ── SYNC CLOUD ──
+async function syncToCloud(tipo, datos) {
+  if (!_sesionUsuario) return;
+  try {
+    await supa.from('documentos').upsert({
+      tipo,
+      numero: datos.numero || datos.num || '',
+      datos: JSON.stringify(datos),
+      usuario_id: _sesionUsuario.user.id,
+      gestor_codigo: _perfilUsuario?.codigo || '',
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'tipo,numero,usuario_id' });
+  } catch(e) { console.warn('syncToCloud error', e); }
+}
+
+async function syncFromCloud() {
+  if (!_sesionUsuario) return;
+  try {
+    const { data } = await supa.from('historial').select('*')
+      .eq('usuario_id', _sesionUsuario.user.id)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (data && data.length) {
+      // Merge con historial local sin sobrescribir
+      const localH = JSON.parse(localStorage.getItem('historialGuias') || '[]');
+      const cloudNums = new Set(data.map(d => d.numero));
+      const soloLocal = localH.filter(g => !cloudNums.has(String(g.num)));
+      const merged = [...data.map(d => JSON.parse(d.datos)), ...soloLocal];
+      localStorage.setItem('historialGuias', JSON.stringify(merged));
+    }
+  } catch(e) { console.warn('syncFromCloud error', e); }
+}
+
+function _suscribirCambios() {
+  if (!_sesionUsuario) return;
+  _suscripcion = supa.channel('historial-changes')
+    .on('postgres_changes', {
+      event: '*', schema: 'public', table: 'historial',
+      filter: `usuario_id=eq.${_sesionUsuario.user.id}`
+    }, () => { syncFromCloud(); })
+    .subscribe();
+}
+
+// ── GUARDAR GUÍA EN NUBE ──
+const _guardarGuiaOriginal = typeof guardarGuia === 'function' ? guardarGuia : null;
+
+async function guardarEnNube(tipo, datos) {
+  if (!_sesionUsuario) return;
+  try {
+    await supa.from('historial').upsert({
+      tipo,
+      numero: String(datos.num || datos.numero || ''),
+      datos: JSON.stringify(datos),
+      usuario_id: _sesionUsuario.user.id,
+      gestor_codigo: _perfilUsuario?.codigo || '',
+      fecha: datos.fecha || new Date().toISOString().slice(0,10),
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'tipo,numero,usuario_id' });
+    mostrarToast('☁️ Guardado en la nube', '#2563a8');
+  } catch(e) { console.warn('guardarEnNube error', e); }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
+  // Iniciar autenticación Supabase
+  if (typeof iniciarApp === 'function') iniciarApp();
   try {
     document.getElementById('numGuia').value = numGuiaActual;
     document.getElementById('lblNumGuia').textContent = 'Guía N° ' + numGuiaActual;
